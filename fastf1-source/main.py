@@ -21,7 +21,11 @@ def _run():
     load_dotenv()
 
     import fastf1
-    from fastf1.exceptions import DataNotLoadedError, SessionNotAvailableError
+    from fastf1.exceptions import DataNotLoadedError
+    try:
+        from fastf1.exceptions import SessionNotAvailableError
+    except ImportError:
+        from fastf1._api import SessionNotAvailableError  # fastf1 3.8.x: not re-exported from exceptions
     from quixstreams import Application
 
     # ── FastF1 cache ──────────────────────────────────────────────────────────
