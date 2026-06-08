@@ -2,6 +2,7 @@ import os
 import time
 import logging
 import fastf1
+from fastf1.exceptions import DataNotLoadedError
 from dotenv import load_dotenv
 from quixstreams import Application
 
@@ -65,7 +66,10 @@ def stream_session(producer, event_name: str, session_name: str, year: int):
     }
 
     # ── Lap data ──────────────────────────────────────────────────────────────
-    laps = session.laps
+    try:
+        laps = session.laps
+    except (DataNotLoadedError, AttributeError):
+        laps = None
     if laps is not None and not laps.empty:
         logger.info(f"  Streaming {len(laps)} laps...")
         prev_ts = None
@@ -91,6 +95,11 @@ def stream_session(producer, event_name: str, session_name: str, year: int):
         logger.info(f"  Lap data streamed.")
 
     # ── Telemetry & Position ──────────────────────────────────────────────────
+    try:
+        pos_data = session.pos_data
+    except (DataNotLoadedError, AttributeError):
+        pos_data = None
+
     for drv in drivers:
         try:
             drv_laps = laps.pick_drivers(drv)
@@ -123,7 +132,7 @@ def stream_session(producer, event_name: str, session_name: str, year: int):
             logger.warning(f"  Telemetry error for driver {drv}: {e}")
 
         try:
-            pos = session.pos_data.get(drv)
+            pos = pos_data.get(drv) if pos_data is not None else None
             if pos is None or pos.empty:
                 continue
             logger.info(f"  Streaming position for driver {drv}: {len(pos)} rows")
@@ -169,7 +178,11 @@ def run_historical(producer):
                     continue
 
             for session_name in sessions_to_run:
-                stream_session(producer, event_name, session_name, YEAR)
+                try:
+                    stream_session(producer, event_name, session_name, YEAR)
+                except (Exception, DataNotLoadedError) as e:
+                    logger.error(f"Unexpected error streaming {event_name} {session_name}: {e}", exc_info=True)
+                    continue
 
         logger.info("All sessions streamed. Restarting from the beginning...")
         time.sleep(10)
