@@ -1,45 +1,58 @@
+# Quix Project Descriptor
+# This file describes the data pipeline and configuration of resources of a Quix Project.
+
 metadata:
   version: 1.0
 
+# This section describes the Deployments of the data pipeline
 deployments:
   - name: FastF1 Source
     application: fastf1-source
-    deploymentType: Service
     version: latest
-    desiredStatus: Running
+    deploymentType: Service
     resources:
-      cpu: 500
-      memory: 1000
-      replicas: 1
-    state:
-      enabled: true
-      size: 2
+      limits:
+        cpu: 500
+        memory: 1000
+    desiredStatus: Running
     variables:
       - name: output_telemetry
         inputType: OutputTopic
+        description: Car telemetry output topic
+        required: true
         value: f1-car-telemetry
       - name: output_lap_data
         inputType: OutputTopic
+        description: Lap timing output topic
+        required: true
         value: f1-lap-data
       - name: output_position
         inputType: OutputTopic
+        description: Position data output topic
+        required: true
         value: f1-position-data
       - name: MODE
         inputType: FreeText
-        value: "historical"
+        description: historical or live
+        value: historical
       - name: YEAR
         inputType: FreeText
-        value: "2025"
+        description: e.g. 2024. Leave empty for current year.
+        value: 2025
       - name: ROUND
         inputType: FreeText
-        value: "1"
+        description: e.g. Monaco or 5. Leave empty for all rounds.
+        value: 1
       - name: SESSION
         inputType: FreeText
-        value: "R"
+        description: e.g. Race, Q, FP1. Leave empty for all sessions.
+        value: R
       - name: PLAYBACK_SPEED
         inputType: FreeText
-        value: "0"
+        description: 0 = max speed, 1.0 = real-time playback
+        value: 0
 
+# This section describes the Topics of the data pipeline
 topics:
   - name: f1-car-telemetry
     configuration:
