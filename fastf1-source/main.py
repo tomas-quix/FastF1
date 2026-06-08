@@ -170,23 +170,34 @@ def stream_session(producer, event_name: str, session_name: str, year: int, roun
 def run_historical(producer):
     """Load and stream historical sessions."""
     logger.info(f"Starting HISTORICAL mode: year={YEAR}, round={ROUND_FILTER or 'ALL'}, session={SESSION_FILTER or 'ALL'}")
-    schedule = fastf1.get_event_schedule(YEAR, include_testing=False)
 
     sessions_to_run = [SESSION_FILTER] if SESSION_FILTER else ALL_SESSIONS
 
     while True:
+        try:
+            schedule = fastf1.get_event_schedule(YEAR, include_testing=False)
+        except Exception as e:
+            logger.warning(f"Failed to fetch event schedule: {e} - sleeping 60s before retry")
+            time.sleep(60)
+            continue
+
         any_data = False
-        for _, event in schedule.iterrows():
-            round_num = str(event.get("RoundNumber", ""))
-            event_name = str(event.get("EventName", ""))
+        try:
+            for _, event in schedule.iterrows():
+                round_num = str(event.get("RoundNumber", ""))
+                event_name = str(event.get("EventName", ""))
 
-            if ROUND_FILTER:
-                if ROUND_FILTER not in (round_num, event_name):
-                    continue
+                if ROUND_FILTER:
+                    if ROUND_FILTER not in (round_num, event_name):
+                        continue
 
-            for session_name in sessions_to_run:
-                if stream_session(producer, event_name, session_name, YEAR, round_num):
-                    any_data = True
+                for session_name in sessions_to_run:
+                    if stream_session(producer, event_name, session_name, YEAR, round_num):
+                        any_data = True
+        except Exception as e:
+            logger.warning(f"Error processing event loop: {e} - sleeping 60s before retry")
+            time.sleep(60)
+            continue
 
         if not any_data:
             logger.info("No data available, sleeping 60s before retry")
