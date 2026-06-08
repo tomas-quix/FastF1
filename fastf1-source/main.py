@@ -13,16 +13,25 @@ logger = logging.getLogger(__name__)
 
 # ── FastF1 cache ──────────────────────────────────────────────────────────────
 CACHE_DIR = os.environ.get("Quix__Deployment__State__Path", "/tmp/fastf1-cache")
-os.makedirs(CACHE_DIR, exist_ok=True)
-fastf1.Cache.enable_cache(CACHE_DIR)
-logger.info(f"FastF1 cache directory: {CACHE_DIR}")
+try:
+    os.makedirs(CACHE_DIR, exist_ok=True)
+    fastf1.Cache.enable_cache(CACHE_DIR)
+    logger.info(f"FastF1 cache directory: {CACHE_DIR}")
+except Exception as e:
+    logger.warning(f"Failed to configure FastF1 cache: {e}")
 
 # ── Config ────────────────────────────────────────────────────────────────────
 MODE = os.environ.get("MODE", "historical").lower()
-YEAR = int(os.environ.get("YEAR", "2025") or "2025")
+try:
+    YEAR = int(os.environ.get("YEAR", "2025") or "2025")
+except Exception:
+    YEAR = 2025
 ROUND_FILTER = os.environ.get("ROUND", "1").strip()
 SESSION_FILTER = os.environ.get("SESSION", "R").strip()
-PLAYBACK_SPEED = float(os.environ.get("PLAYBACK_SPEED", "0") or "0")
+try:
+    PLAYBACK_SPEED = float(os.environ.get("PLAYBACK_SPEED", "0") or "0")
+except Exception:
+    PLAYBACK_SPEED = 0.0
 
 OUTPUT_TELEMETRY = os.environ.get("output_telemetry", "f1-car-telemetry")
 OUTPUT_LAP_DATA = os.environ.get("output_lap_data", "f1-lap-data")
@@ -30,11 +39,11 @@ OUTPUT_POSITION = os.environ.get("output_position", "f1-position-data")
 
 ALL_SESSIONS = ["FP1", "FP2", "FP3", "Q", "R"]
 
-app = Application()
-
-topic_telemetry = app.topic(OUTPUT_TELEMETRY, value_serializer="json")
-topic_lap_data = app.topic(OUTPUT_LAP_DATA, value_serializer="json")
-topic_position = app.topic(OUTPUT_POSITION, value_serializer="json")
+# Deferred to main() so broker-connection failures are caught and retried there
+app = None
+topic_telemetry = None
+topic_lap_data = None
+topic_position = None
 
 
 def _sleep_for_playback(prev_ts, curr_ts):
@@ -55,9 +64,16 @@ def stream_session(producer, event_name: str, session_name: str, year: int, roun
     except SessionNotAvailableError:
         logger.warning(f"No data available for session {year} Round {round_num} [{session_name}] - skipping")
         return False
+    except Exception as e:
+        logger.warning(f"Failed to load session {year} Round {round_num} [{session_name}]: {e} - skipping")
+        return False
 
-    drivers = session.drivers
-    logger.info(f"  Drivers: {drivers}")
+    try:
+        drivers = session.drivers
+        logger.info(f"  Drivers: {drivers}")
+    except Exception as e:
+        logger.warning(f"  Could not read drivers for {event_name} {session_name}: {e} - skipping")
+        return False
 
     meta = {
         "year": year,
@@ -68,36 +84,42 @@ def stream_session(producer, event_name: str, session_name: str, year: int, roun
     # ── Lap data ──────────────────────────────────────────────────────────────
     try:
         laps = session.laps
-    except (DataNotLoadedError, AttributeError):
+    except Exception:
         laps = None
-    if laps is not None and not laps.empty:
-        logger.info(f"  Streaming {len(laps)} laps...")
-        prev_ts = None
-        for _, lap in laps.iterrows():
-            drv = str(lap.get("Driver", "UNK"))
-            row = {k: (v.isoformat() if hasattr(v, "isoformat") else
-                       (float(v) if hasattr(v, "item") else
-                        (str(v) if v != v else v)))
-                   for k, v in lap.items()
-                   if v == v}  # skip NaN
-            row.update(meta)
-            row["driver"] = drv
-            ts_col = lap.get("LapStartDate")
-            if prev_ts is not None and ts_col == ts_col:
-                _sleep_for_playback(prev_ts, ts_col)
-            if ts_col == ts_col:
-                prev_ts = ts_col
-            producer.produce(
-                topic=topic_lap_data.name,
-                key=drv,
-                value=row,
-            )
-        logger.info(f"  Lap data streamed.")
+    try:
+        if laps is not None and not laps.empty:
+            logger.info(f"  Streaming {len(laps)} laps...")
+            prev_ts = None
+            for _, lap in laps.iterrows():
+                try:
+                    drv = str(lap.get("Driver", "UNK"))
+                    row = {k: (v.isoformat() if hasattr(v, "isoformat") else
+                               (float(v) if hasattr(v, "item") else
+                                (str(v) if v != v else v)))
+                           for k, v in lap.items()
+                           if v == v}  # skip NaN
+                    row.update(meta)
+                    row["driver"] = drv
+                    ts_col = lap.get("LapStartDate")
+                    if prev_ts is not None and ts_col == ts_col:
+                        _sleep_for_playback(prev_ts, ts_col)
+                    if ts_col == ts_col:
+                        prev_ts = ts_col
+                    producer.produce(
+                        topic=topic_lap_data.name,
+                        key=drv,
+                        value=row,
+                    )
+                except Exception as e:
+                    logger.warning(f"  Error producing lap row: {e}")
+            logger.info(f"  Lap data streamed.")
+    except Exception as e:
+        logger.warning(f"  Error streaming lap data for {event_name} {session_name}: {e}")
 
     # ── Telemetry & Position ──────────────────────────────────────────────────
     try:
         pos_data = session.pos_data
-    except (DataNotLoadedError, AttributeError):
+    except Exception:
         pos_data = None
 
     if laps is None:
@@ -168,43 +190,47 @@ def stream_session(producer, event_name: str, session_name: str, year: int, roun
 
 
 def run_historical(producer):
-    """Load and stream historical sessions."""
+    """Load and stream historical sessions. Never raises - all failures are caught and logged."""
     logger.info(f"Starting HISTORICAL mode: year={YEAR}, round={ROUND_FILTER or 'ALL'}, session={SESSION_FILTER or 'ALL'}")
 
     sessions_to_run = [SESSION_FILTER] if SESSION_FILTER else ALL_SESSIONS
 
     while True:
         try:
-            schedule = fastf1.get_event_schedule(YEAR, include_testing=False)
+            try:
+                schedule = fastf1.get_event_schedule(YEAR, include_testing=False)
+            except Exception as e:
+                logger.warning(f"Failed to fetch event schedule: {e} - sleeping 60s before retry")
+                time.sleep(60)
+                continue
+
+            any_data = False
+            try:
+                for _, event in schedule.iterrows():
+                    round_num = str(event.get("RoundNumber", ""))
+                    event_name = str(event.get("EventName", ""))
+
+                    if ROUND_FILTER:
+                        if ROUND_FILTER not in (round_num, event_name):
+                            continue
+
+                    for session_name in sessions_to_run:
+                        if stream_session(producer, event_name, session_name, YEAR, round_num):
+                            any_data = True
+            except Exception as e:
+                logger.warning(f"Error processing event loop: {e} - sleeping 60s before retry")
+                time.sleep(60)
+                continue
+
+            if not any_data:
+                logger.info("No data available, sleeping 60s before retry")
+                time.sleep(60)
+            else:
+                logger.info("All sessions streamed. Restarting from the beginning...")
+                time.sleep(10)
         except Exception as e:
-            logger.warning(f"Failed to fetch event schedule: {e} - sleeping 60s before retry")
+            logger.warning(f"Unexpected error in run_historical loop: {e} - sleeping 60s")
             time.sleep(60)
-            continue
-
-        any_data = False
-        try:
-            for _, event in schedule.iterrows():
-                round_num = str(event.get("RoundNumber", ""))
-                event_name = str(event.get("EventName", ""))
-
-                if ROUND_FILTER:
-                    if ROUND_FILTER not in (round_num, event_name):
-                        continue
-
-                for session_name in sessions_to_run:
-                    if stream_session(producer, event_name, session_name, YEAR, round_num):
-                        any_data = True
-        except Exception as e:
-            logger.warning(f"Error processing event loop: {e} - sleeping 60s before retry")
-            time.sleep(60)
-            continue
-
-        if not any_data:
-            logger.info("No data available, sleeping 60s before retry")
-            time.sleep(60)
-        else:
-            logger.info("All sessions streamed. Restarting from the beginning...")
-            time.sleep(10)
 
 
 def run_live():
@@ -233,11 +259,21 @@ def run_live():
 
 
 def main():
-    if MODE == "live":
-        run_live()
-    else:
-        with app.get_producer() as producer:
-            run_historical(producer)
+    global app, topic_telemetry, topic_lap_data, topic_position
+    while True:
+        try:
+            app = Application()
+            topic_telemetry = app.topic(OUTPUT_TELEMETRY, value_serializer="json")
+            topic_lap_data = app.topic(OUTPUT_LAP_DATA, value_serializer="json")
+            topic_position = app.topic(OUTPUT_POSITION, value_serializer="json")
+            if MODE == "live":
+                run_live()
+            else:
+                with app.get_producer() as producer:
+                    run_historical(producer)
+        except Exception as e:
+            logger.warning(f"Top-level exception caught, restarting in 60s: {e}")
+            time.sleep(60)
 
 
 if __name__ == "__main__":
