@@ -1,0 +1,18 @@
+FROM python:3.11-slim-buster
+
+ENV DEBIAN_FRONTEND="noninteractive"
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONIOENCODING=UTF-8
+
+# Install system dependencies needed by numpy/pandas/matplotlib (used by fastf1)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libgomp1 \
+    gcc \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+COPY --from=git /project .
+RUN find . | grep requirements.txt | xargs -I '{}' python3 -m pip install -r '{}'
+
+ENTRYPOINT ["python3", "main.py"]

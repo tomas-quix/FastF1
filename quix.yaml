@@ -1,0 +1,55 @@
+metadata:
+  version: 1.0
+
+deployments:
+  - name: FastF1 Source
+    application: fastf1-source
+    deploymentType: Service
+    version: latest
+    desiredStatus: Running
+    resources:
+      cpu: 500
+      memory: 1000
+      replicas: 1
+    state:
+      enabled: true
+      size: 2
+    variables:
+      - name: output_telemetry
+        inputType: OutputTopic
+        value: f1-car-telemetry
+      - name: output_lap_data
+        inputType: OutputTopic
+        value: f1-lap-data
+      - name: output_position
+        inputType: OutputTopic
+        value: f1-position-data
+      - name: MODE
+        inputType: FreeText
+        value: "historical"
+      - name: YEAR
+        inputType: FreeText
+        value: "2024"
+      - name: ROUND
+        inputType: FreeText
+        value: ""
+      - name: SESSION
+        inputType: FreeText
+        value: ""
+      - name: PLAYBACK_SPEED
+        inputType: FreeText
+        value: "0"
+
+topics:
+  - name: f1-car-telemetry
+    configuration:
+      partitions: 4
+      retentionInMinutes: 1440
+  - name: f1-lap-data
+    configuration:
+      partitions: 2
+      retentionInMinutes: 1440
+  - name: f1-position-data
+    configuration:
+      partitions: 4
+      retentionInMinutes: 1440

@@ -1,0 +1,46 @@
+name: FastF1 Source
+language: python
+variables:
+  - name: output_telemetry
+    inputType: OutputTopic
+    description: Car telemetry output topic
+    defaultValue: f1-car-telemetry
+    required: true
+  - name: output_lap_data
+    inputType: OutputTopic
+    description: Lap timing output topic
+    defaultValue: f1-lap-data
+    required: true
+  - name: output_position
+    inputType: OutputTopic
+    description: Position data output topic
+    defaultValue: f1-position-data
+    required: true
+  - name: MODE
+    inputType: FreeText
+    description: "historical or live"
+    defaultValue: historical
+    required: false
+  - name: YEAR
+    inputType: FreeText
+    description: "e.g. 2024. Leave empty for current year."
+    defaultValue: "2024"
+    required: false
+  - name: ROUND
+    inputType: FreeText
+    description: "e.g. Monaco or 5. Leave empty for all rounds."
+    defaultValue: ""
+    required: false
+  - name: SESSION
+    inputType: FreeText
+    description: "e.g. Race, Q, FP1. Leave empty for all sessions."
+    defaultValue: ""
+    required: false
+  - name: PLAYBACK_SPEED
+    inputType: FreeText
+    description: "0 = max speed, 1.0 = real-time playback"
+    defaultValue: "0"
+    required: false
+dockerfile: build/dockerfile
+runEntryPoint: main.py
+defaultFile: main.py
