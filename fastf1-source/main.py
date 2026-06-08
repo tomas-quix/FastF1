@@ -100,6 +100,11 @@ def stream_session(producer, event_name: str, session_name: str, year: int):
     except (DataNotLoadedError, AttributeError):
         pos_data = None
 
+    if laps is None:
+        logger.info(f"  No lap data loaded for {event_name} {session_name}, skipping telemetry/position.")
+        logger.info(f"Session {event_name} {session_name} complete.")
+        return
+
     for drv in drivers:
         try:
             drv_laps = laps.pick_drivers(drv)
