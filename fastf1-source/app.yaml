@@ -24,17 +24,17 @@ variables:
   - name: YEAR
     inputType: FreeText
     description: "e.g. 2024. Leave empty for current year."
-    defaultValue: "2024"
+    defaultValue: "2025"
     required: false
   - name: ROUND
     inputType: FreeText
     description: "e.g. Monaco or 5. Leave empty for all rounds."
-    defaultValue: ""
+    defaultValue: "1"
     required: false
   - name: SESSION
     inputType: FreeText
     description: "e.g. Race, Q, FP1. Leave empty for all sessions."
-    defaultValue: ""
+    defaultValue: "R"
     required: false
   - name: PLAYBACK_SPEED
     inputType: FreeText

@@ -19,9 +19,9 @@ logger.info(f"FastF1 cache directory: {CACHE_DIR}")
 
 # ── Config ────────────────────────────────────────────────────────────────────
 MODE = os.environ.get("MODE", "historical").lower()
-YEAR = int(os.environ.get("YEAR", "2024") or "2024")
-ROUND_FILTER = os.environ.get("ROUND", "").strip()
-SESSION_FILTER = os.environ.get("SESSION", "").strip()
+YEAR = int(os.environ.get("YEAR", "2025") or "2025")
+ROUND_FILTER = os.environ.get("ROUND", "1").strip()
+SESSION_FILTER = os.environ.get("SESSION", "R").strip()
 PLAYBACK_SPEED = float(os.environ.get("PLAYBACK_SPEED", "0") or "0")
 
 OUTPUT_TELEMETRY = os.environ.get("output_telemetry", "f1-car-telemetry")
