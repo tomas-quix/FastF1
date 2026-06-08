@@ -2,7 +2,7 @@ import os
 import time
 import logging
 import fastf1
-from fastf1.exceptions import DataNotLoadedError
+from fastf1.exceptions import DataNotLoadedError, SessionNotAvailableError
 from dotenv import load_dotenv
 from quixstreams import Application
 
@@ -46,15 +46,15 @@ def _sleep_for_playback(prev_ts, curr_ts):
         time.sleep(delta / PLAYBACK_SPEED)
 
 
-def stream_session(producer, event_name: str, session_name: str, year: int):
-    """Load and stream a single F1 session to Kafka."""
+def stream_session(producer, event_name: str, session_name: str, year: int, round_num: str = "") -> bool:
+    """Load and stream a single F1 session to Kafka. Returns True if data was streamed."""
     logger.info(f"Loading session: {year} {event_name} – {session_name}")
     try:
         session = fastf1.get_session(year, event_name, session_name)
         session.load(telemetry=True, laps=True, weather=False)
-    except Exception as e:
-        logger.warning(f"Could not load {year} {event_name} {session_name}: {e}")
-        return
+    except SessionNotAvailableError:
+        logger.warning(f"No data available for session {year} Round {round_num} [{session_name}] - skipping")
+        return False
 
     drivers = session.drivers
     logger.info(f"  Drivers: {drivers}")
@@ -103,7 +103,7 @@ def stream_session(producer, event_name: str, session_name: str, year: int):
     if laps is None:
         logger.info(f"  No lap data loaded for {event_name} {session_name}, skipping telemetry/position.")
         logger.info(f"Session {event_name} {session_name} complete.")
-        return
+        return True
 
     for drv in drivers:
         try:
@@ -164,6 +164,7 @@ def stream_session(producer, event_name: str, session_name: str, year: int):
             logger.warning(f"  Position error for driver {drv}: {e}")
 
     logger.info(f"Session {event_name} {session_name} complete.")
+    return True
 
 
 def run_historical(producer):
@@ -174,6 +175,7 @@ def run_historical(producer):
     sessions_to_run = [SESSION_FILTER] if SESSION_FILTER else ALL_SESSIONS
 
     while True:
+        any_data = False
         for _, event in schedule.iterrows():
             round_num = str(event.get("RoundNumber", ""))
             event_name = str(event.get("EventName", ""))
@@ -183,14 +185,15 @@ def run_historical(producer):
                     continue
 
             for session_name in sessions_to_run:
-                try:
-                    stream_session(producer, event_name, session_name, YEAR)
-                except (Exception, DataNotLoadedError) as e:
-                    logger.error(f"Unexpected error streaming {event_name} {session_name}: {e}", exc_info=True)
-                    continue
+                if stream_session(producer, event_name, session_name, YEAR, round_num):
+                    any_data = True
 
-        logger.info("All sessions streamed. Restarting from the beginning...")
-        time.sleep(10)
+        if not any_data:
+            logger.info("No data available, sleeping 60s before retry")
+            time.sleep(60)
+        else:
+            logger.info("All sessions streamed. Restarting from the beginning...")
+            time.sleep(10)
 
 
 def run_live():
