@@ -31,26 +31,14 @@ deployments:
         description: Position data output topic
         required: true
         value: f1-position-data
-      - name: MODE
-        inputType: FreeText
-        description: historical or live
-        value: historical
       - name: YEAR
         inputType: FreeText
-        description: e.g. 2024. Leave empty for current year.
+        description: e.g. 2023
         value: 2023
       - name: ROUND
         inputType: FreeText
-        description: e.g. Monaco or 5. Leave empty for all rounds.
+        description: e.g. 1 for Bahrain GP
         value: 1
-      - name: SESSION
-        inputType: FreeText
-        description: e.g. Race, Q, FP1. Leave empty for all sessions.
-        value: R
-      - name: PLAYBACK_SPEED
-        inputType: FreeText
-        description: 0 = max speed, 1.0 = real-time playback
-        value: 0
 
 # This section describes the Topics of the data pipeline
 topics:
