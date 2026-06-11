@@ -38,7 +38,7 @@ deployments:
       - name: YEAR
         inputType: FreeText
         description: e.g. 2024. Leave empty for current year.
-        value: 2025
+        value: 2023
       - name: ROUND
         inputType: FreeText
         description: e.g. Monaco or 5. Leave empty for all rounds.

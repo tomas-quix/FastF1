@@ -24,7 +24,7 @@ variables:
   - name: YEAR
     inputType: FreeText
     description: "e.g. 2024. Leave empty for current year."
-    defaultValue: "2025"
+    defaultValue: "2023"
     required: false
   - name: ROUND
     inputType: FreeText
