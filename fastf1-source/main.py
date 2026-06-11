@@ -63,7 +63,8 @@ def stream_race_results(producer, year, round_num):
             "fastest_lap_time": result.get("FastestLap", {}).get("Time", {}).get("time"),
             "fastest_lap_speed": result.get("FastestLap", {}).get("AverageSpeed", {}).get("speed"),
         }
-        producer.produce(topic=topic_lap_data.name, key=driver.get("driverId", "unknown"), value=msg)
+        msg_serialized = topic_lap_data.serialize(key=driver.get("driverId", "unknown"), value=msg)
+        producer.produce(topic=topic_lap_data.name, key=msg_serialized.key, value=msg_serialized.value)
         count += 1
     logger.info(f"Produced {count} race result rows to {topic_lap_data.name}")
     return count
@@ -99,7 +100,8 @@ def stream_lap_times(producer, year, round_num):
                     "position": int(timing.get("position", 0)),
                     "lap_time": timing.get("time"),
                 }
-                producer.produce(topic=topic_telemetry.name, key=timing.get("driverId", "unknown"), value=msg)
+                msg_serialized = topic_telemetry.serialize(key=timing.get("driverId", "unknown"), value=msg)
+                producer.produce(topic=topic_telemetry.name, key=msg_serialized.key, value=msg_serialized.value)
                 total += 1
         offset += limit
         if offset >= total_available:
@@ -133,7 +135,8 @@ def stream_pit_stops(producer, year, round_num):
             "time": stop.get("time"),
             "duration": stop.get("duration"),
         }
-        producer.produce(topic=topic_position.name, key=stop.get("driverId", "unknown"), value=msg)
+        msg_serialized = topic_position.serialize(key=stop.get("driverId", "unknown"), value=msg)
+        producer.produce(topic=topic_position.name, key=msg_serialized.key, value=msg_serialized.value)
         count += 1
     logger.info(f"Produced {count} pit stop rows to {topic_position.name}")
     return count
