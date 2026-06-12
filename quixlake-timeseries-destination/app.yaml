@@ -1,0 +1,73 @@
+name: Quix DataLake Timeseries Sink
+language: python
+variables:
+  - name: input
+    inputType: InputTopic
+    description: Name of the Kafka input topic to consume from
+    required: true
+  - name: TABLE_NAME
+    inputType: FreeText
+    description: Table name for data organization
+    required: false
+  - name: HIVE_COLUMNS
+    inputType: FreeText
+    description: Comma-separated list of columns for Hive partitioning
+    required: false
+  - name: TIMESTAMP_COLUMN
+    inputType: FreeText
+    description: Column containing timestamp values
+    defaultValue: timestamp
+    required: false
+  - name: AUTO_DISCOVER
+    inputType: FreeText
+    description: Automatically register table in REST Catalog on first write
+    defaultValue: "true"
+    required: false
+  - name: CATALOG_NAMESPACE
+    inputType: FreeText
+    description: Catalog namespace for table registration
+    defaultValue: default
+    required: false
+  - name: BATCH_SIZE
+    inputType: FreeText
+    description: Number of messages to batch before writing to storage
+    defaultValue: "1000"
+    required: false
+  - name: COMMIT_INTERVAL
+    inputType: FreeText
+    description: Kafka commit interval in seconds
+    defaultValue: "30"
+    required: false
+  - name: KAFKA_KEY_DESERIALIZER
+    inputType: FreeText
+    description: The key deserializer to use
+    defaultValue: str
+    required: false
+  - name: KAFKA_VALUE_DESERIALIZER
+    inputType: FreeText
+    description: The value deserializer to use
+    defaultValue: json
+    required: false
+  - name: CONSUMER_GROUP
+    inputType: FreeText
+    description: Kafka consumer group name
+    defaultValue: s3_direct_sink_v1.0
+    required: false
+  - name: AUTO_OFFSET_RESET
+    inputType: FreeText
+    description: Where to start consuming if no offset exists
+    defaultValue: earliest
+    required: false
+  - name: LOGLEVEL
+    inputType: FreeText
+    description: Application logging level
+    defaultValue: INFO
+    required: false
+  - name: MAX_WRITE_WORKERS
+    inputType: FreeText
+    description: How many files can be written in parallel
+    defaultValue: "10"
+    required: false
+dockerfile: dockerfile
+runEntryPoint: main.py
+defaultFile: main.py
