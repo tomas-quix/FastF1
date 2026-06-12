@@ -1,0 +1,48 @@
+name: F1 Car Telemetry Lake Sink
+language: python
+variables:
+  - name: input
+    inputType: InputTopic
+    description: Input Kafka topic
+    required: true
+  - name: TABLE_NAME
+    inputType: FreeText
+    description: Table name in QuixLake
+    required: true
+  - name: HIVE_COLUMNS
+    inputType: FreeText
+    description: Comma-separated HIVE partition columns
+    required: false
+  - name: AUTO_OFFSET_RESET
+    inputType: FreeText
+    description: Kafka offset reset policy
+    defaultValue: earliest
+    required: false
+  - name: BATCH_SIZE
+    inputType: FreeText
+    description: Write batch size
+    defaultValue: "1000"
+    required: false
+  - name: COMMIT_INTERVAL
+    inputType: FreeText
+    description: Commit interval seconds
+    defaultValue: "30"
+    required: false
+  - name: KAFKA_VALUE_DESERIALIZER
+    inputType: FreeText
+    description: Kafka value deserializer
+    defaultValue: json
+    required: false
+  - name: AUTO_DISCOVER
+    inputType: FreeText
+    description: Auto-discover table schema
+    defaultValue: "true"
+    required: false
+  - name: CONSUMER_GROUP
+    inputType: FreeText
+    description: Kafka consumer group name
+    defaultValue: f1-car-telemetry-lake-sink
+    required: false
+dockerfile: dockerfile
+runEntryPoint: main.py
+defaultFile: main.py

@@ -40,6 +40,120 @@ deployments:
         description: e.g. 1 for Bahrain GP
         value: 1
 
+  - name: F1 Lap Data Lake Sink
+    application: f1-lap-data-lake-sink
+    deploymentType: Service
+    version: latest
+    desiredStatus: Running
+    resources:
+      cpu: 200
+      memory: 500
+      replicas: 1
+    variables:
+      - name: input
+        inputType: InputTopic
+        value: f1-lap-data
+      - name: TABLE_NAME
+        inputType: FreeText
+        value: f1-lap-data
+      - name: HIVE_COLUMNS
+        inputType: FreeText
+        value: "year,round,race_name"
+      - name: AUTO_OFFSET_RESET
+        inputType: FreeText
+        value: earliest
+      - name: BATCH_SIZE
+        inputType: FreeText
+        value: "1000"
+      - name: COMMIT_INTERVAL
+        inputType: FreeText
+        value: "30"
+      - name: KAFKA_VALUE_DESERIALIZER
+        inputType: FreeText
+        value: json
+      - name: AUTO_DISCOVER
+        inputType: FreeText
+        value: "true"
+      - name: CONSUMER_GROUP
+        inputType: FreeText
+        value: f1-lap-data-lake-sink
+
+  - name: F1 Telemetry Lake Sink
+    application: f1-car-telemetry-lake-sink
+    deploymentType: Service
+    version: latest
+    desiredStatus: Running
+    resources:
+      cpu: 200
+      memory: 500
+      replicas: 1
+    variables:
+      - name: input
+        inputType: InputTopic
+        value: f1-car-telemetry
+      - name: TABLE_NAME
+        inputType: FreeText
+        value: f1-car-telemetry
+      - name: HIVE_COLUMNS
+        inputType: FreeText
+        value: "year,round,race_name,driver_id"
+      - name: AUTO_OFFSET_RESET
+        inputType: FreeText
+        value: earliest
+      - name: BATCH_SIZE
+        inputType: FreeText
+        value: "1000"
+      - name: COMMIT_INTERVAL
+        inputType: FreeText
+        value: "30"
+      - name: KAFKA_VALUE_DESERIALIZER
+        inputType: FreeText
+        value: json
+      - name: AUTO_DISCOVER
+        inputType: FreeText
+        value: "true"
+      - name: CONSUMER_GROUP
+        inputType: FreeText
+        value: f1-car-telemetry-lake-sink
+
+  - name: F1 Position Lake Sink
+    application: f1-position-data-lake-sink
+    deploymentType: Service
+    version: latest
+    desiredStatus: Running
+    resources:
+      cpu: 200
+      memory: 500
+      replicas: 1
+    variables:
+      - name: input
+        inputType: InputTopic
+        value: f1-position-data
+      - name: TABLE_NAME
+        inputType: FreeText
+        value: f1-position-data
+      - name: HIVE_COLUMNS
+        inputType: FreeText
+        value: "year,round,race_name,driver_id"
+      - name: AUTO_OFFSET_RESET
+        inputType: FreeText
+        value: earliest
+      - name: BATCH_SIZE
+        inputType: FreeText
+        value: "1000"
+      - name: COMMIT_INTERVAL
+        inputType: FreeText
+        value: "30"
+      - name: KAFKA_VALUE_DESERIALIZER
+        inputType: FreeText
+        value: json
+      - name: AUTO_DISCOVER
+        inputType: FreeText
+        value: "true"
+      - name: CONSUMER_GROUP
+        inputType: FreeText
+        value: f1-position-data-lake-sink
+
 # This section describes the Topics of the data pipeline
 topics:
   - name: f1-car-telemetry
