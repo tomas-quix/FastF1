@@ -39,16 +39,15 @@ deployments:
         inputType: FreeText
         description: e.g. 1 for Bahrain GP
         value: 1
-
   - name: F1 Lap Data Sink
     application: quixlake-timeseries-destination
-    deploymentType: Service
     version: latest
-    desiredStatus: Running
+    deploymentType: Service
     resources:
-      cpu: 200
-      memory: 500
-      replicas: 1
+      limits:
+        cpu: 200
+        memory: 500
+    desiredStatus: Running
     variables:
       - name: input
         inputType: InputTopic
@@ -58,73 +57,101 @@ deployments:
         value: f1-lap-data
       - name: HIVE_COLUMNS
         inputType: FreeText
-        value: "year,round,race_name"
+        value: year,round,race_name
       - name: AUTO_OFFSET_RESET
         inputType: FreeText
         value: earliest
       - name: BATCH_SIZE
         inputType: FreeText
-        value: "1000"
+        value: 1000
       - name: COMMIT_INTERVAL
         inputType: FreeText
-        value: "30"
+        value: 30
       - name: KAFKA_VALUE_DESERIALIZER
         inputType: FreeText
         value: json
       - name: AUTO_DISCOVER
         inputType: FreeText
-        value: "true"
+        value: true
       - name: CONSUMER_GROUP
         inputType: FreeText
         value: f1-lap-data-sink
-
   - name: F1 Telemetry Sink
     application: quixlake-timeseries-destination
-    deploymentType: Service
     version: latest
-    desiredStatus: Running
+    deploymentType: Service
     resources:
-      cpu: 200
-      memory: 500
-      replicas: 1
+      limits:
+        cpu: 200
+        memory: 500
+    desiredStatus: Running
     variables:
       - name: input
         inputType: InputTopic
+        description: Name of the Kafka input topic to consume from
+        required: true
         value: f1-car-telemetry
       - name: TABLE_NAME
         inputType: FreeText
+        description: Table name for data organization
         value: f1-car-telemetry
       - name: HIVE_COLUMNS
         inputType: FreeText
-        value: "year,round,race_name,driver_id"
-      - name: AUTO_OFFSET_RESET
+        description: Comma-separated list of columns for Hive partitioning
+        value: year,round,race_name,driver_id
+      - name: TIMESTAMP_COLUMN
         inputType: FreeText
-        value: earliest
-      - name: BATCH_SIZE
-        inputType: FreeText
-        value: "1000"
-      - name: COMMIT_INTERVAL
-        inputType: FreeText
-        value: "30"
-      - name: KAFKA_VALUE_DESERIALIZER
-        inputType: FreeText
-        value: json
+        description: Column containing timestamp values
+        value: timestamp
       - name: AUTO_DISCOVER
         inputType: FreeText
-        value: "true"
+        description: Automatically register table in REST Catalog on first write
+        value: true
+      - name: CATALOG_NAMESPACE
+        inputType: FreeText
+        description: Catalog namespace for table registration
+        value: default
+      - name: BATCH_SIZE
+        inputType: FreeText
+        description: Number of messages to batch before writing to storage
+        value: 1000
+      - name: COMMIT_INTERVAL
+        inputType: FreeText
+        description: Kafka commit interval in seconds
+        value: 30
+      - name: KAFKA_KEY_DESERIALIZER
+        inputType: FreeText
+        description: The key deserializer to use
+        value: str
+      - name: KAFKA_VALUE_DESERIALIZER
+        inputType: FreeText
+        description: The value deserializer to use
+        value: json
       - name: CONSUMER_GROUP
         inputType: FreeText
+        description: Kafka consumer group name
         value: f1-telemetry-sink
-
+      - name: AUTO_OFFSET_RESET
+        inputType: FreeText
+        description: Where to start consuming if no offset exists
+        value: earliest
+      - name: LOGLEVEL
+        inputType: FreeText
+        description: Application logging level
+        value: INFO
+      - name: MAX_WRITE_WORKERS
+        inputType: FreeText
+        description: How many files can be written in parallel
+        value: 10
   - name: F1 Position Sink
     application: quixlake-timeseries-destination
-    deploymentType: Service
     version: latest
-    desiredStatus: Running
+    deploymentType: Service
     resources:
-      cpu: 200
-      memory: 500
-      replicas: 1
+      limits:
+        cpu: 200
+        memory: 500
+    desiredStatus: Running
     variables:
       - name: input
         inputType: InputTopic
@@ -134,22 +161,22 @@ deployments:
         value: f1-position-data
       - name: HIVE_COLUMNS
         inputType: FreeText
-        value: "year,round,race_name,driver_id"
+        value: year,round,race_name,driver_id
       - name: AUTO_OFFSET_RESET
         inputType: FreeText
         value: earliest
       - name: BATCH_SIZE
         inputType: FreeText
-        value: "1000"
+        value: 1000
       - name: COMMIT_INTERVAL
         inputType: FreeText
-        value: "30"
+        value: 30
       - name: KAFKA_VALUE_DESERIALIZER
         inputType: FreeText
         value: json
       - name: AUTO_DISCOVER
         inputType: FreeText
-        value: "true"
+        value: true
       - name: CONSUMER_GROUP
         inputType: FreeText
         value: f1-position-sink
