@@ -40,8 +40,8 @@ deployments:
         description: e.g. 1 for Bahrain GP
         value: 1
 
-  - name: F1 Lap Data Lake Sink
-    application: f1-lap-data-lake-sink
+  - name: F1 Lap Data Sink
+    application: quixlake-timeseries-destination
     deploymentType: Service
     version: latest
     desiredStatus: Running
@@ -76,10 +76,10 @@ deployments:
         value: "true"
       - name: CONSUMER_GROUP
         inputType: FreeText
-        value: f1-lap-data-lake-sink
+        value: f1-lap-data-sink
 
-  - name: F1 Telemetry Lake Sink
-    application: f1-car-telemetry-lake-sink
+  - name: F1 Telemetry Sink
+    application: quixlake-timeseries-destination
     deploymentType: Service
     version: latest
     desiredStatus: Running
@@ -114,10 +114,10 @@ deployments:
         value: "true"
       - name: CONSUMER_GROUP
         inputType: FreeText
-        value: f1-car-telemetry-lake-sink
+        value: f1-telemetry-sink
 
-  - name: F1 Position Lake Sink
-    application: f1-position-data-lake-sink
+  - name: F1 Position Sink
+    application: quixlake-timeseries-destination
     deploymentType: Service
     version: latest
     desiredStatus: Running
@@ -152,7 +152,7 @@ deployments:
         value: "true"
       - name: CONSUMER_GROUP
         inputType: FreeText
-        value: f1-position-data-lake-sink
+        value: f1-position-sink
 
 # This section describes the Topics of the data pipeline
 topics:
