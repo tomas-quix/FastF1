@@ -29,7 +29,7 @@ def main():
     app = Application()
 
     logger.info("Loading FastF1 session...")
-    session = fastf1.get_session(YEAR, ROUND, SESSION_ID)
+    session = fastf1.get_session(2021, 7, "Q")
     session.load(
         laps=True, telemetry=True, weather=False, messages=False, livedata=None
     )
