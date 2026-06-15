@@ -14,7 +14,7 @@ deployments:
       limits:
         cpu: 500
         memory: 1000
-    desiredStatus: Running
+    desiredStatus: Stopped
     variables:
       - name: output_telemetry
         inputType: OutputTopic
