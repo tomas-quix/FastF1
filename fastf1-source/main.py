@@ -36,8 +36,20 @@ def sanitize(obj):
 
 def main():
     import logging
-    # Make FastF1 loggers propagate exceptions with full tracebacks
-    logging.getLogger("fastf1").setLevel(logging.DEBUG)
+
+    class TracebackHandler(logging.StreamHandler):
+        """Re-emit WARNING+ records with current exc_info so FastF1 silent catches become visible."""
+        def emit(self, record):
+            if record.levelno >= logging.WARNING and not record.exc_info:
+                record.exc_info = sys.exc_info()
+            super().emit(record)
+
+    ff1_logger = logging.getLogger("fastf1")
+    ff1_logger.handlers.clear()
+    ff1_logger.addHandler(TracebackHandler())
+    ff1_logger.setLevel(logging.DEBUG)
+    ff1_logger.propagate = False
+
     for handler in logging.root.handlers:
         handler.setLevel(logging.DEBUG)
     logger = logging.getLogger(__name__)
@@ -61,9 +73,13 @@ def main():
 
     session = fastf1.get_session(year, event, session_type)
     try:
-        session.load(telemetry=True, weather=True, messages=False)
+        session.load(laps=True, telemetry=True, weather=True, messages=False)
     except Exception:
         logger.exception("session.load() raised an exception")
+        sys.exit(1)
+
+    if session.laps is None or len(session.laps) == 0:
+        logger.error("No lap data loaded — session.load() may have failed silently. Check warnings above.")
         sys.exit(1)
 
     app = Application(
