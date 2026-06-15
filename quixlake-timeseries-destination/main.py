@@ -14,7 +14,6 @@ File paths follow the workspace-aware structure:
 import os
 import re
 import logging
-import json as _json
 
 from quixstreams import Application
 from quixstreams.sinks.core.quix_ts_datalake_sink import QuixTSDataLakeSink
@@ -83,23 +82,60 @@ if not _TABLE_NAME_PATTERN.match(table_name):
 # Workspace ID (automatically injected by Quix platform)
 workspace_id = os.getenv("Quix__Workspace__Id", "")
 
-# Inject blob storage config from individual env vars when platform doesn't inject the full JSON
+# Fetch blob storage config from Portal API if not already injected by platform
 if not os.environ.get("Quix__BlobStorage__Connection__Json"):
-    _provider = os.environ.get("BLOB_PROVIDER", "")
-    _bucket = os.environ.get("BLOB_BUCKET", "")
-    _access_key = os.environ.get("BLOB_ACCESS_KEY_ID", "")
-    _secret_key = os.environ.get("BLOB_SECRET_ACCESS_KEY", "")
-    _service_url = os.environ.get("BLOB_SERVICE_URL", "")
-    if _provider and _bucket and _access_key and _secret_key:
-        _cfg = {"Provider": _provider, "S3Compatible": {"BucketName": _bucket, "AccessKeyId": _access_key, "SecretAccessKey": _secret_key}}
-        if _service_url:
-            _cfg["S3Compatible"]["ServiceUrl"] = _service_url
-        os.environ["Quix__BlobStorage__Connection__Json"] = _json.dumps(_cfg)
+    try:
+        import httpx as _httpx
+        _portal = os.environ.get("Quix__Portal__Api", "")
+        _token = os.environ.get("Quix__Sdk__Token", "")
+        _ws = os.environ.get("Quix__Workspace__Id", "")
+        if _portal and _token and _ws:
+            _r = _httpx.get(f"{_portal}/quixlake", headers={"Authorization": f"bearer {_token}"}, timeout=10)
+            if _r.status_code == 200:
+                _lake = _r.json()
+                # Extract blobStorageConfigId from the first deployment
+                _blob_id = None
+                for _d in _lake:
+                    _blob_id = _d.get("blobStorageConfigId")
+                    if _blob_id:
+                        break
+                if _blob_id:
+                    # Get the connection JSON via storage-gateway
+                    _r2 = _httpx.post(
+                        f"{_portal}/storage-gateway",
+                        headers={"Authorization": f"bearer {_token}", "Content-Type": "application/json"},
+                        json={"blobStorageConfigId": _blob_id, "workspaceId": _ws},
+                        timeout=10
+                    )
+                    if _r2.status_code == 200:
+                        os.environ["Quix__BlobStorage__Connection__Json"] = _r2.text
+                        logger.info("Fetched blob storage config from Portal API")
+                    else:
+                        logger.warning(f"storage-gateway returned {_r2.status_code}: {_r2.text[:200]}")
+    except Exception as _e:
+        logger.warning(f"Could not fetch blob storage config: {_e}")
 
+# Inject catalog URL if not set
 if not os.environ.get("Quix__Lakehouse__Catalog__Url"):
-    _cat = os.environ.get("CATALOG_URL_OVERRIDE", "")
-    if _cat:
-        os.environ["Quix__Lakehouse__Catalog__Url"] = _cat
+    try:
+        import httpx as _httpx
+        _portal = os.environ.get("Quix__Portal__Api", "")
+        _token = os.environ.get("Quix__Sdk__Token", "")
+        _ws = os.environ.get("Quix__Workspace__Id", "")
+        if _portal and _token and _ws:
+            _r3 = _httpx.get(
+                f"{_portal}/quixlake/lakehouse/Catalog/{_ws}",
+                headers={"Authorization": f"bearer {_token}"},
+                timeout=10
+            )
+            if _r3.status_code == 200:
+                _cat = _r3.json()
+                _svc = _cat.get("serviceName", "")
+                if _svc:
+                    os.environ["Quix__Lakehouse__Catalog__Url"] = f"http://{_svc}:5001"
+                    logger.info(f"Set catalog URL to http://{_svc}:5001")
+    except Exception as _e:
+        logger.warning(f"Could not fetch catalog URL: {_e}")
 
 # Initialize QuixLakeSink
 # Note: Blob storage credentials are configured via Quix__BlobStorage__Connection__Json

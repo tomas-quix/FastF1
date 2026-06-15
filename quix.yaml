@@ -76,24 +76,6 @@ deployments:
       - name: CONSUMER_GROUP
         inputType: FreeText
         value: f1-lap-data-sink
-      - name: BLOB_PROVIDER
-        inputType: FreeText
-        value: Gcp
-      - name: BLOB_BUCKET
-        inputType: FreeText
-        value: quixdevbucket
-      - name: BLOB_ACCESS_KEY_ID
-        inputType: FreeText
-        value: GOOG6EUPNLYFI3AQUWE75USN
-      - name: BLOB_SECRET_ACCESS_KEY
-        inputType: Secret
-        value: BLOB_SECRET_ACCESS_KEY
-      - name: BLOB_SERVICE_URL
-        inputType: FreeText
-        value: ""
-      - name: CATALOG_URL_OVERRIDE
-        inputType: FreeText
-        value: "http://lh-cat-aefc6306.quixdev-global.svc.cluster.local:5001"
   - name: F1 Telemetry Sink
     application: quixlake-timeseries-destination
     version: latest
@@ -161,24 +143,6 @@ deployments:
         inputType: FreeText
         description: How many files can be written in parallel
         value: 10
-      - name: BLOB_PROVIDER
-        inputType: FreeText
-        value: Gcp
-      - name: BLOB_BUCKET
-        inputType: FreeText
-        value: quixdevbucket
-      - name: BLOB_ACCESS_KEY_ID
-        inputType: FreeText
-        value: GOOG6EUPNLYFI3AQUWE75USN
-      - name: BLOB_SECRET_ACCESS_KEY
-        inputType: Secret
-        value: BLOB_SECRET_ACCESS_KEY
-      - name: BLOB_SERVICE_URL
-        inputType: FreeText
-        value: ""
-      - name: CATALOG_URL_OVERRIDE
-        inputType: FreeText
-        value: "http://lh-cat-aefc6306.quixdev-global.svc.cluster.local:5001"
   - name: F1 Position Sink
     application: quixlake-timeseries-destination
     version: latest
@@ -216,24 +180,6 @@ deployments:
       - name: CONSUMER_GROUP
         inputType: FreeText
         value: f1-position-sink
-      - name: BLOB_PROVIDER
-        inputType: FreeText
-        value: Gcp
-      - name: BLOB_BUCKET
-        inputType: FreeText
-        value: quixdevbucket
-      - name: BLOB_ACCESS_KEY_ID
-        inputType: FreeText
-        value: GOOG6EUPNLYFI3AQUWE75USN
-      - name: BLOB_SECRET_ACCESS_KEY
-        inputType: Secret
-        value: BLOB_SECRET_ACCESS_KEY
-      - name: BLOB_SERVICE_URL
-        inputType: FreeText
-        value: ""
-      - name: CATALOG_URL_OVERRIDE
-        inputType: FreeText
-        value: "http://lh-cat-aefc6306.quixdev-global.svc.cluster.local:5001"
 
 # This section describes the Topics of the data pipeline
 topics:

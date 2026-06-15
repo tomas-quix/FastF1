@@ -68,30 +68,6 @@ variables:
     description: How many files can be written in parallel
     defaultValue: "10"
     required: false
-  - name: BLOB_PROVIDER
-    inputType: FreeText
-    description: Blob storage provider (S3, Gcp, Azure, Minio, Local)
-    required: false
-  - name: BLOB_BUCKET
-    inputType: FreeText
-    description: Blob storage bucket/container name
-    required: false
-  - name: BLOB_ACCESS_KEY_ID
-    inputType: FreeText
-    description: Blob storage access key ID
-    required: false
-  - name: BLOB_SECRET_ACCESS_KEY
-    inputType: Secret
-    description: Blob storage secret access key
-    required: false
-  - name: BLOB_SERVICE_URL
-    inputType: FreeText
-    description: Blob storage service URL (optional, for MinIO/GCP)
-    required: false
-  - name: CATALOG_URL_OVERRIDE
-    inputType: FreeText
-    description: Lakehouse catalog URL override
-    required: false
 dockerfile: dockerfile
 runEntryPoint: main.py
 defaultFile: main.py
