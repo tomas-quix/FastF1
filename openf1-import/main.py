@@ -34,20 +34,44 @@ ENDPOINTS = [
 
 
 def resolve_session_key(year, meeting_name, session_type):
-    """Resolve OpenF1 session_key from year, meeting name, and session type."""
-    url = f"{BASE_URL}/sessions"
-    params = {
-        "year": year,
-        "meeting_name": meeting_name,
-        "session_type": session_type,
-    }
-    resp = requests.get(url, params=params, timeout=30)
+    """Resolve OpenF1 session_key from year, meeting name, and session type.
+
+    Uses a two-step lookup: first resolves the meeting_key from the meetings
+    endpoint, then queries sessions filtered by meeting_key and session_type.
+    The sessions endpoint does not support meeting_name as a filter directly.
+    """
+    # Step 1: resolve meeting_key from meeting_name
+    meetings_url = f"{BASE_URL}/meetings"
+    meetings_params = {"year": year, "meeting_name": meeting_name}
+    resp = requests.get(meetings_url, params=meetings_params, timeout=30)
+    resp.raise_for_status()
+    meetings = resp.json()
+
+    if len(meetings) == 0:
+        raise ValueError(
+            f"No meeting found for year={year}, meeting_name='{meeting_name}'. "
+            f"Check your parameters."
+        )
+    if len(meetings) > 1:
+        names = [m.get("meeting_name", "?") for m in meetings]
+        raise ValueError(
+            f"Ambiguous: {len(meetings)} meetings matched for "
+            f"meeting_name='{meeting_name}'. Matches: {names}"
+        )
+
+    meeting_key = meetings[0]["meeting_key"]
+    logger.info("Resolved meeting: %s (meeting_key=%s)", meetings[0].get("meeting_name"), meeting_key)
+
+    # Step 2: resolve session_key from meeting_key + session_type
+    sessions_url = f"{BASE_URL}/sessions"
+    sessions_params = {"meeting_key": meeting_key, "session_type": session_type}
+    resp = requests.get(sessions_url, params=sessions_params, timeout=30)
     resp.raise_for_status()
     sessions = resp.json()
 
     if len(sessions) == 0:
         raise ValueError(
-            f"No session found for year={year}, meeting_name='{meeting_name}', "
+            f"No session found for meeting_key={meeting_key}, "
             f"session_type='{session_type}'. Check your parameters."
         )
     if len(sessions) > 1:

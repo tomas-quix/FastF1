@@ -11,32 +11,48 @@ from main import (
 
 
 class TestResolveSessionKey(unittest.TestCase):
-    """Tests for resolve_session_key."""
+    """Tests for resolve_session_key (two-step: meetings -> sessions)."""
 
     @patch("main.requests.get")
     def test_happy_path(self, mock_get):
-        """Single session returned — should return its session_key."""
-        mock_resp = MagicMock()
-        mock_resp.json.return_value = [
+        """Single meeting + single session — should return session_key."""
+        mock_meetings_resp = MagicMock()
+        mock_meetings_resp.json.return_value = [
+            {"meeting_key": 1229, "meeting_name": "Bahrain Grand Prix"}
+        ]
+        mock_meetings_resp.raise_for_status = MagicMock()
+
+        mock_sessions_resp = MagicMock()
+        mock_sessions_resp.json.return_value = [
             {
                 "session_key": 9876,
                 "meeting_name": "Bahrain Grand Prix",
                 "session_name": "Race",
             }
         ]
-        mock_resp.raise_for_status = MagicMock()
-        mock_get.return_value = mock_resp
+        mock_sessions_resp.raise_for_status = MagicMock()
 
-        result = resolve_session_key("2024", "Bahrain", "Race")
+        mock_get.side_effect = [mock_meetings_resp, mock_sessions_resp]
+
+        result = resolve_session_key("2024", "Bahrain Grand Prix", "Race")
         self.assertEqual(result, 9876)
-        mock_get.assert_called_once()
-        args, kwargs = mock_get.call_args
-        self.assertIn("sessions", args[0])
-        self.assertEqual(kwargs["params"]["year"], "2024")
+        self.assertEqual(mock_get.call_count, 2)
+
+        # First call: meetings endpoint
+        args1, kwargs1 = mock_get.call_args_list[0]
+        self.assertIn("meetings", args1[0])
+        self.assertEqual(kwargs1["params"]["year"], "2024")
+        self.assertEqual(kwargs1["params"]["meeting_name"], "Bahrain Grand Prix")
+
+        # Second call: sessions endpoint
+        args2, kwargs2 = mock_get.call_args_list[1]
+        self.assertIn("sessions", args2[0])
+        self.assertEqual(kwargs2["params"]["meeting_key"], 1229)
+        self.assertEqual(kwargs2["params"]["session_type"], "Race")
 
     @patch("main.requests.get")
-    def test_no_match(self, mock_get):
-        """Empty response — should raise ValueError."""
+    def test_no_meeting_match(self, mock_get):
+        """No meeting found — should raise ValueError."""
         mock_resp = MagicMock()
         mock_resp.json.return_value = []
         mock_resp.raise_for_status = MagicMock()
@@ -44,21 +60,63 @@ class TestResolveSessionKey(unittest.TestCase):
 
         with self.assertRaises(ValueError) as ctx:
             resolve_session_key("2024", "NonExistent", "Race")
-        self.assertIn("No session found", str(ctx.exception))
+        self.assertIn("No meeting found", str(ctx.exception))
 
     @patch("main.requests.get")
-    def test_ambiguous(self, mock_get):
-        """Multiple sessions returned — should raise ValueError."""
+    def test_ambiguous_meetings(self, mock_get):
+        """Multiple meetings matched — should raise ValueError."""
         mock_resp = MagicMock()
         mock_resp.json.return_value = [
-            {"session_key": 1, "meeting_name": "Bahrain GP", "session_name": "Race"},
-            {"session_key": 2, "meeting_name": "Bahrain GP", "session_name": "Sprint"},
+            {"meeting_key": 1, "meeting_name": "Bahrain GP"},
+            {"meeting_key": 2, "meeting_name": "Bahrain Test"},
         ]
         mock_resp.raise_for_status = MagicMock()
         mock_get.return_value = mock_resp
 
         with self.assertRaises(ValueError) as ctx:
             resolve_session_key("2024", "Bahrain", "Race")
+        self.assertIn("Ambiguous", str(ctx.exception))
+        self.assertIn("2 meetings", str(ctx.exception))
+
+    @patch("main.requests.get")
+    def test_no_session_match(self, mock_get):
+        """Meeting found but no session — should raise ValueError."""
+        mock_meetings_resp = MagicMock()
+        mock_meetings_resp.json.return_value = [
+            {"meeting_key": 1229, "meeting_name": "Bahrain Grand Prix"}
+        ]
+        mock_meetings_resp.raise_for_status = MagicMock()
+
+        mock_sessions_resp = MagicMock()
+        mock_sessions_resp.json.return_value = []
+        mock_sessions_resp.raise_for_status = MagicMock()
+
+        mock_get.side_effect = [mock_meetings_resp, mock_sessions_resp]
+
+        with self.assertRaises(ValueError) as ctx:
+            resolve_session_key("2024", "Bahrain Grand Prix", "Race")
+        self.assertIn("No session found", str(ctx.exception))
+
+    @patch("main.requests.get")
+    def test_ambiguous_sessions(self, mock_get):
+        """Meeting found but multiple sessions — should raise ValueError."""
+        mock_meetings_resp = MagicMock()
+        mock_meetings_resp.json.return_value = [
+            {"meeting_key": 1229, "meeting_name": "Bahrain Grand Prix"}
+        ]
+        mock_meetings_resp.raise_for_status = MagicMock()
+
+        mock_sessions_resp = MagicMock()
+        mock_sessions_resp.json.return_value = [
+            {"session_key": 1, "meeting_name": "Bahrain GP", "session_name": "Race"},
+            {"session_key": 2, "meeting_name": "Bahrain GP", "session_name": "Sprint"},
+        ]
+        mock_sessions_resp.raise_for_status = MagicMock()
+
+        mock_get.side_effect = [mock_meetings_resp, mock_sessions_resp]
+
+        with self.assertRaises(ValueError) as ctx:
+            resolve_session_key("2024", "Bahrain Grand Prix", "Race")
         self.assertIn("Ambiguous", str(ctx.exception))
         self.assertIn("2 sessions", str(ctx.exception))
 
