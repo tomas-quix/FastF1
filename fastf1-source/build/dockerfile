@@ -1,0 +1,11 @@
+FROM python:3.11-slim
+ENV DEBIAN_FRONTEND="noninteractive"
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONIOENCODING=UTF-8
+WORKDIR /app
+COPY --from=git /project .
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+RUN find | grep requirements.txt | xargs -I '{}' python3 -m pip install -r '{}'
+ENTRYPOINT ["python3", "fastf1-source/main.py"]
