@@ -67,252 +67,291 @@ deployments:
         inputType: OutputTopic
         value: openf1-weather
   - name: "Sink - Car Data"
-    deploymentType: Managed
-    libraryItemId: data-lake-sink
+    application: QuixLake Timeseries Sink
+    deploymentType: Service
     version: latest
     desiredStatus: Running
     resources:
-      cpu: 500
-      memory: 1500
+      cpu: 200
+      memory: 500
       replicas: 1
     variables:
-      - name: topic
+      - name: input
         inputType: InputTopic
         value: openf1-car-data
-      - name: autoOffsetReset
+      - name: TABLE_NAME
+        inputType: FreeText
+        value: openf1_car_data
+      - name: AUTO_OFFSET_RESET
         inputType: FreeText
         value: earliest
-      - name: commitTimeInterval
+      - name: CONSUMER_GROUP
         inputType: FreeText
-        value: "60"
+        value: sink-car-data
   - name: "Sink - Laps"
-    deploymentType: Managed
-    libraryItemId: data-lake-sink
+    application: QuixLake Timeseries Sink
+    deploymentType: Service
     version: latest
     desiredStatus: Running
     resources:
-      cpu: 500
-      memory: 1500
+      cpu: 200
+      memory: 500
       replicas: 1
     variables:
-      - name: topic
+      - name: input
         inputType: InputTopic
         value: openf1-laps
-      - name: autoOffsetReset
+      - name: TABLE_NAME
+        inputType: FreeText
+        value: openf1_laps
+      - name: AUTO_OFFSET_RESET
         inputType: FreeText
         value: earliest
-      - name: commitTimeInterval
+      - name: CONSUMER_GROUP
         inputType: FreeText
-        value: "60"
+        value: sink-laps
   - name: "Sink - Drivers"
-    deploymentType: Managed
-    libraryItemId: data-lake-sink
+    application: QuixLake Timeseries Sink
+    deploymentType: Service
     version: latest
     desiredStatus: Running
     resources:
-      cpu: 500
-      memory: 1500
+      cpu: 200
+      memory: 500
       replicas: 1
     variables:
-      - name: topic
+      - name: input
         inputType: InputTopic
         value: openf1-drivers
-      - name: autoOffsetReset
+      - name: TABLE_NAME
+        inputType: FreeText
+        value: openf1_drivers
+      - name: AUTO_OFFSET_RESET
         inputType: FreeText
         value: earliest
-      - name: commitTimeInterval
+      - name: CONSUMER_GROUP
         inputType: FreeText
-        value: "60"
+        value: sink-drivers
   - name: "Sink - Intervals"
-    deploymentType: Managed
-    libraryItemId: data-lake-sink
+    application: QuixLake Timeseries Sink
+    deploymentType: Service
     version: latest
     desiredStatus: Running
     resources:
-      cpu: 500
-      memory: 1500
+      cpu: 200
+      memory: 500
       replicas: 1
     variables:
-      - name: topic
+      - name: input
         inputType: InputTopic
         value: openf1-intervals
-      - name: autoOffsetReset
+      - name: TABLE_NAME
+        inputType: FreeText
+        value: openf1_intervals
+      - name: AUTO_OFFSET_RESET
         inputType: FreeText
         value: earliest
-      - name: commitTimeInterval
+      - name: CONSUMER_GROUP
         inputType: FreeText
-        value: "60"
+        value: sink-intervals
   - name: "Sink - Location"
-    deploymentType: Managed
-    libraryItemId: data-lake-sink
+    application: QuixLake Timeseries Sink
+    deploymentType: Service
     version: latest
     desiredStatus: Running
     resources:
-      cpu: 500
-      memory: 1500
+      cpu: 200
+      memory: 500
       replicas: 1
     variables:
-      - name: topic
+      - name: input
         inputType: InputTopic
         value: openf1-location
-      - name: autoOffsetReset
+      - name: TABLE_NAME
+        inputType: FreeText
+        value: openf1_location
+      - name: AUTO_OFFSET_RESET
         inputType: FreeText
         value: earliest
-      - name: commitTimeInterval
+      - name: CONSUMER_GROUP
         inputType: FreeText
-        value: "60"
+        value: sink-location
   - name: "Sink - Meetings"
-    deploymentType: Managed
-    libraryItemId: data-lake-sink
+    application: QuixLake Timeseries Sink
+    deploymentType: Service
     version: latest
     desiredStatus: Running
     resources:
-      cpu: 500
-      memory: 1500
+      cpu: 200
+      memory: 500
       replicas: 1
     variables:
-      - name: topic
+      - name: input
         inputType: InputTopic
         value: openf1-meetings
-      - name: autoOffsetReset
+      - name: TABLE_NAME
+        inputType: FreeText
+        value: openf1_meetings
+      - name: AUTO_OFFSET_RESET
         inputType: FreeText
         value: earliest
-      - name: commitTimeInterval
+      - name: CONSUMER_GROUP
         inputType: FreeText
-        value: "60"
+        value: sink-meetings
   - name: "Sink - Pit"
-    deploymentType: Managed
-    libraryItemId: data-lake-sink
+    application: QuixLake Timeseries Sink
+    deploymentType: Service
     version: latest
     desiredStatus: Running
     resources:
-      cpu: 500
-      memory: 1500
+      cpu: 200
+      memory: 500
       replicas: 1
     variables:
-      - name: topic
+      - name: input
         inputType: InputTopic
         value: openf1-pit
-      - name: autoOffsetReset
+      - name: TABLE_NAME
+        inputType: FreeText
+        value: openf1_pit
+      - name: AUTO_OFFSET_RESET
         inputType: FreeText
         value: earliest
-      - name: commitTimeInterval
+      - name: CONSUMER_GROUP
         inputType: FreeText
-        value: "60"
+        value: sink-pit
   - name: "Sink - Position"
-    deploymentType: Managed
-    libraryItemId: data-lake-sink
+    application: QuixLake Timeseries Sink
+    deploymentType: Service
     version: latest
     desiredStatus: Running
     resources:
-      cpu: 500
-      memory: 1500
+      cpu: 200
+      memory: 500
       replicas: 1
     variables:
-      - name: topic
+      - name: input
         inputType: InputTopic
         value: openf1-position
-      - name: autoOffsetReset
+      - name: TABLE_NAME
+        inputType: FreeText
+        value: openf1_position
+      - name: AUTO_OFFSET_RESET
         inputType: FreeText
         value: earliest
-      - name: commitTimeInterval
+      - name: CONSUMER_GROUP
         inputType: FreeText
-        value: "60"
+        value: sink-position
   - name: "Sink - Race Control"
-    deploymentType: Managed
-    libraryItemId: data-lake-sink
+    application: QuixLake Timeseries Sink
+    deploymentType: Service
     version: latest
     desiredStatus: Running
     resources:
-      cpu: 500
-      memory: 1500
+      cpu: 200
+      memory: 500
       replicas: 1
     variables:
-      - name: topic
+      - name: input
         inputType: InputTopic
         value: openf1-race-control
-      - name: autoOffsetReset
+      - name: TABLE_NAME
+        inputType: FreeText
+        value: openf1_race_control
+      - name: AUTO_OFFSET_RESET
         inputType: FreeText
         value: earliest
-      - name: commitTimeInterval
+      - name: CONSUMER_GROUP
         inputType: FreeText
-        value: "60"
+        value: sink-race-control
   - name: "Sink - Sessions"
-    deploymentType: Managed
-    libraryItemId: data-lake-sink
+    application: QuixLake Timeseries Sink
+    deploymentType: Service
     version: latest
     desiredStatus: Running
     resources:
-      cpu: 500
-      memory: 1500
+      cpu: 200
+      memory: 500
       replicas: 1
     variables:
-      - name: topic
+      - name: input
         inputType: InputTopic
         value: openf1-sessions
-      - name: autoOffsetReset
+      - name: TABLE_NAME
+        inputType: FreeText
+        value: openf1_sessions
+      - name: AUTO_OFFSET_RESET
         inputType: FreeText
         value: earliest
-      - name: commitTimeInterval
+      - name: CONSUMER_GROUP
         inputType: FreeText
-        value: "60"
+        value: sink-sessions
   - name: "Sink - Stints"
-    deploymentType: Managed
-    libraryItemId: data-lake-sink
+    application: QuixLake Timeseries Sink
+    deploymentType: Service
     version: latest
     desiredStatus: Running
     resources:
-      cpu: 500
-      memory: 1500
+      cpu: 200
+      memory: 500
       replicas: 1
     variables:
-      - name: topic
+      - name: input
         inputType: InputTopic
         value: openf1-stints
-      - name: autoOffsetReset
+      - name: TABLE_NAME
+        inputType: FreeText
+        value: openf1_stints
+      - name: AUTO_OFFSET_RESET
         inputType: FreeText
         value: earliest
-      - name: commitTimeInterval
+      - name: CONSUMER_GROUP
         inputType: FreeText
-        value: "60"
+        value: sink-stints
   - name: "Sink - Team Radio"
-    deploymentType: Managed
-    libraryItemId: data-lake-sink
+    application: QuixLake Timeseries Sink
+    deploymentType: Service
     version: latest
     desiredStatus: Running
     resources:
-      cpu: 500
-      memory: 1500
+      cpu: 200
+      memory: 500
       replicas: 1
     variables:
-      - name: topic
+      - name: input
         inputType: InputTopic
         value: openf1-team-radio
-      - name: autoOffsetReset
+      - name: TABLE_NAME
+        inputType: FreeText
+        value: openf1_team_radio
+      - name: AUTO_OFFSET_RESET
         inputType: FreeText
         value: earliest
-      - name: commitTimeInterval
+      - name: CONSUMER_GROUP
         inputType: FreeText
-        value: "60"
+        value: sink-team-radio
   - name: "Sink - Weather"
-    deploymentType: Managed
-    libraryItemId: data-lake-sink
+    application: QuixLake Timeseries Sink
+    deploymentType: Service
     version: latest
     desiredStatus: Running
     resources:
-      cpu: 500
-      memory: 1500
+      cpu: 200
+      memory: 500
       replicas: 1
     variables:
-      - name: topic
+      - name: input
         inputType: InputTopic
         value: openf1-weather
-      - name: autoOffsetReset
+      - name: TABLE_NAME
+        inputType: FreeText
+        value: openf1_weather
+      - name: AUTO_OFFSET_RESET
         inputType: FreeText
         value: earliest
-      - name: commitTimeInterval
+      - name: CONSUMER_GROUP
         inputType: FreeText
-        value: "60"
+        value: sink-weather
 
 topics:
   - name: openf1-car-data
