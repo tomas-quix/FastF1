@@ -147,6 +147,8 @@ deployments:
     application: quixlake-timeseries-destination
     version: latest
     deploymentType: Service
+    blobStorage:
+      bind: true
     resources:
       limits:
         cpu: 200
