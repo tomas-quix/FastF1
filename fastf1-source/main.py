@@ -1,4 +1,6 @@
 import os
+import sys
+import time
 import logging
 
 import fastf1
@@ -171,8 +173,25 @@ def main():
 
     logger.info(f"Loading FastF1 session: {year} {gp} {session_type}")
     session = fastf1.get_session(year, gp, session_type)
-    session.load()
-    logger.info("Session loaded successfully")
+
+    max_retries = 3
+    retry_delays = [10, 30, 60]
+
+    for attempt in range(max_retries):
+        try:
+            logger.info(f"Loading session data (attempt {attempt + 1}/{max_retries})...")
+            session.load()
+            logger.info("Session loaded successfully")
+            break
+        except Exception as e:
+            if attempt < max_retries - 1:
+                delay = retry_delays[attempt]
+                logger.warning(f"Failed to load session: {e}. Retrying in {delay}s...")
+                time.sleep(delay)
+            else:
+                logger.error(f"Failed to load session after {max_retries} attempts: {e}")
+                logger.error("The FastF1 API/mirror appears to be unavailable. Please try again later.")
+                sys.exit(1)
 
     session_key = f"{year}-{gp}-{session_type}"
 
@@ -194,6 +213,22 @@ def main():
 
     total = results_count + laps_count + telemetry_count + weather_count
     logger.info(f"Import complete! Total messages produced: {total}")
+
+    # Summary of data layer availability
+    layers = {
+        'Results': results_count,
+        'Laps': laps_count,
+        'Telemetry': telemetry_count,
+        'Weather': weather_count,
+    }
+    produced = [name for name, count in layers.items() if count > 0]
+    empty = [name for name, count in layers.items() if count == 0]
+
+    if produced:
+        logger.info(f"Successfully produced: {', '.join(produced)}")
+    if empty:
+        logger.warning(f"Empty/unavailable: {', '.join(empty)}")
+
     logger.info(f"  Results: {results_count}, Laps: {laps_count}, Telemetry: {telemetry_count}, Weather: {weather_count}")
 
 
