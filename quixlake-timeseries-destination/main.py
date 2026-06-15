@@ -90,28 +90,31 @@ if not os.environ.get("Quix__BlobStorage__Connection__Json"):
         _token = os.environ.get("Quix__Sdk__Token", "")
         _ws = os.environ.get("Quix__Workspace__Id", "")
         if _portal and _token and _ws:
+            # Get blobStorageConfigId from the lakehouse listing
             _r = _httpx.get(f"{_portal}/quixlake", headers={"Authorization": f"bearer {_token}"}, timeout=10)
+            _blob_id = None
             if _r.status_code == 200:
-                _lake = _r.json()
-                # Extract blobStorageConfigId from the first deployment
-                _blob_id = None
-                for _d in _lake:
-                    _blob_id = _d.get("blobStorageConfigId")
-                    if _blob_id:
-                        break
-                if _blob_id:
-                    # Get the connection JSON via storage-gateway
-                    _r2 = _httpx.post(
-                        f"{_portal}/storage-gateway",
-                        headers={"Authorization": f"bearer {_token}", "Content-Type": "application/json"},
-                        json={"blobStorageConfigId": _blob_id, "workspaceId": _ws},
-                        timeout=10
-                    )
-                    if _r2.status_code == 200:
-                        os.environ["Quix__BlobStorage__Connection__Json"] = _r2.text
-                        logger.info("Fetched blob storage config from Portal API")
-                    else:
-                        logger.warning(f"storage-gateway returned {_r2.status_code}: {_r2.text[:200]}")
+                _lake_data = _r.json()
+                # Handle both list-of-dicts and list-of-strings
+                for _item in _lake_data:
+                    if isinstance(_item, dict):
+                        _blob_id = _item.get("blobStorageConfigId")
+                        if _blob_id:
+                            break
+            if _blob_id:
+                # Try storage-gateway
+                _r2 = _httpx.post(
+                    f"{_portal}/storage-gateway",
+                    headers={"Authorization": f"bearer {_token}", "Content-Type": "application/json"},
+                    json={"blobStorageConfigId": _blob_id, "workspaceId": _ws},
+                    timeout=10
+                )
+                logger.info(f"storage-gateway response: {_r2.status_code} {_r2.text[:200]}")
+                if _r2.status_code == 200:
+                    os.environ["Quix__BlobStorage__Connection__Json"] = _r2.text
+                    logger.info("Fetched blob storage config from Portal API via storage-gateway")
+            # Log what we got for debugging
+            logger.info(f"blob_id={_blob_id}, Quix__BlobStorage__Connection__Json set={bool(os.environ.get('Quix__BlobStorage__Connection__Json'))}")
     except Exception as _e:
         logger.warning(f"Could not fetch blob storage config: {_e}")
 
