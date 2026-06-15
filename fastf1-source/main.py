@@ -47,7 +47,10 @@ def main():
 
     print(f"[FastF1 Source] Loading {year} {event} {session_type} ...")
 
-    fastf1.Cache.enable_cache("/app/cache")
+    cache_dir = "/app/cache"
+    print(f"[FastF1 Source] Creating cache directory: {cache_dir}")
+    os.makedirs(cache_dir, exist_ok=True)
+    fastf1.Cache.enable_cache(cache_dir)
 
     try:
         session = fastf1.get_session(year, event, session_type)
