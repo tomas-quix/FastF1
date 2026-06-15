@@ -3,6 +3,7 @@ import math
 import logging
 import fastf1
 import fastf1.ergast
+import fastf1.exceptions
 import numpy as np
 import pandas as pd
 from dotenv import load_dotenv
@@ -63,7 +64,7 @@ def timedelta_to_ms(val):
 
 def load_via_ergast(year, round_number, producer, lap_topic, telemetry_topic):
     """Fall back to Ergast API for lap data when FastF1 livetiming is unavailable."""
-    logger.warning("Falling back to Ergast API for lap/race data (no telemetry will be produced)")
+    logger.warning("Falling back to Ergast API for lap/race data (no high-freq telemetry will be produced)")
 
     e = fastf1.ergast.Ergast()
 
@@ -71,36 +72,52 @@ def load_via_ergast(year, round_number, producer, lap_topic, telemetry_topic):
     lap_times_response = e.get_lap_times(season=year, round=round_number)
     race_results_response = e.get_race_results(season=year, round=round_number)
 
-    # Build a position map from race results: driverCode -> final position
-    position_map = {}
+    # Extract race name from description DataFrame (has 'raceName' column)
     race_name = f"Round {round_number}"
+    if hasattr(race_results_response, "description") and race_results_response.description is not None:
+        try:
+            desc = race_results_response.description
+            if hasattr(desc, "columns") and "raceName" in desc.columns:
+                race_name = str(desc["raceName"].iloc[0])
+        except Exception:
+            pass
+    if race_name == f"Round {round_number}" and hasattr(lap_times_response, "description"):
+        try:
+            desc = lap_times_response.description
+            if hasattr(desc, "columns") and "raceName" in desc.columns:
+                race_name = str(desc["raceName"].iloc[0])
+        except Exception:
+            pass
+
+    # Build a final-position map from race results: driverId -> final position
+    # get_race_results columns include: driverId, driverCode, position, ...
+    position_map = {}
+    seen_drivers = set()
     if race_results_response.content:
         results_df = race_results_response.content[0]
-        if "driverCode" in results_df.columns and "position" in results_df.columns:
+        if "driverId" in results_df.columns and "position" in results_df.columns:
             for _, row in results_df.iterrows():
-                position_map[str(row["driverCode"])] = to_native(row["position"])
-        # Try to extract race name from response description
-        if hasattr(race_results_response, "description") and race_results_response.description:
-            desc = race_results_response.description
-            if isinstance(desc, dict):
-                race_name = desc.get("raceName", race_name)
+                position_map[str(row["driverId"])] = to_native(row["position"])
+                seen_drivers.add(str(row["driverId"]))
 
     lap_count = 0
+    telemetry_count = 0
 
     if not lap_times_response.content:
         logger.warning("Ergast returned no lap time data")
-        return lap_count, race_name
+        return lap_count, telemetry_count, race_name
 
     for content_df in lap_times_response.content:
         if content_df is None or content_df.empty:
             continue
 
-        # Ergast lap times DataFrame has columns like: driverCode, lap, time, position, etc.
+        # Ergast get_lap_times columns: number (lap#), driverId, position, time (Timedelta)
         for _, lap_row in content_df.iterrows():
-            driver_id = str(lap_row.get("driverCode", lap_row.get("driverId", "unknown")))
-            lap_num = to_native(lap_row.get("lap"))
+            driver_id = str(lap_row.get("driverId", "unknown"))
+            # 'number' is the lap number in the Ergast lap times response
+            lap_num = to_native(lap_row.get("number"))
 
-            # Convert "m:ss.mmm" string time to milliseconds if needed
+            # 'time' is already a pd.Timedelta from the Ergast client
             raw_time = lap_row.get("time")
             lap_time_ms = None
             if isinstance(raw_time, pd.Timedelta):
@@ -117,6 +134,7 @@ def load_via_ergast(year, round_number, producer, lap_topic, telemetry_topic):
                 except (ValueError, IndexError):
                     pass
 
+            # per-lap position from lap times; fall back to final race position
             position = to_native(lap_row.get("position")) or position_map.get(driver_id)
 
             payload = {
@@ -143,8 +161,25 @@ def load_via_ergast(year, round_number, producer, lap_topic, telemetry_topic):
             )
             lap_count += 1
 
-    logger.info(f"Ergast fallback: produced {lap_count} lap rows, 0 telemetry rows")
-    return lap_count, race_name
+    # Produce one placeholder telemetry message per driver so the topic is not empty
+    for driver_id in (seen_drivers if seen_drivers else {"unknown"}):
+        placeholder = {
+            "driver_id": driver_id,
+            "source": "ergast_fallback",
+            "year": year,
+            "round": round_number,
+            "race_name": race_name,
+            "note": "high-freq telemetry unavailable from cloud",
+        }
+        producer.produce(
+            topic=telemetry_topic.name,
+            key=driver_id,
+            value=telemetry_topic.serialize(key=driver_id, value=placeholder).value,
+        )
+        telemetry_count += 1
+
+    logger.info(f"Ergast fallback: produced {lap_count} lap rows, {telemetry_count} telemetry placeholder rows")
+    return lap_count, telemetry_count, race_name
 
 
 def main():
@@ -161,9 +196,17 @@ def main():
     try:
         # livedata=None explicitly tells FastF1 not to use any live data source
         session.load(telemetry=True, laps=True, weather=False, messages=False, livedata=None)
+        # session.load() does NOT raise when livetiming is unavailable - it silently
+        # returns empty DataFrames. Explicitly check that laps actually loaded.
+        try:
+            laps_data = session.laps
+            if laps_data is None or len(laps_data) == 0:
+                raise Exception("Session laps empty after load - livetiming unavailable, using Ergast fallback")
+        except fastf1.exceptions.DataNotLoadedError as exc:
+            raise Exception(f"Session laps not loaded (DataNotLoadedError): {exc}") from exc
         session_loaded = True
     except Exception as exc:
-        logger.warning(f"session.load() failed ({type(exc).__name__}: {exc}); will use Ergast fallback")
+        logger.warning(f"FastF1 session.load() unavailable: {exc}. Falling back to Ergast.")
 
     if session_loaded:
         race_name = session.event["EventName"]
@@ -257,11 +300,12 @@ def main():
     else:
         # Ergast fallback path
         with app.get_producer() as producer:
-            lap_count, race_name = load_via_ergast(
+            lap_count, telemetry_count, race_name = load_via_ergast(
                 YEAR, ROUND, producer, lap_topic, telemetry_topic
             )
         logger.info(
-            f"Done (Ergast fallback). Produced {lap_count} lap rows and 0 telemetry rows "
+            f"Done (Ergast fallback). Produced {lap_count} lap rows and "
+            f"{telemetry_count} telemetry placeholder rows "
             f"for {race_name} ({YEAR} round {ROUND})."
         )
 
