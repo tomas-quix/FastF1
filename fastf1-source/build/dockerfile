@@ -15,4 +15,19 @@ WORKDIR /app
 COPY --from=git /project .
 RUN find . | grep requirements.txt | xargs -I '{}' python3 -m pip install -r '{}'
 
+# Pre-download FastF1 session data into the image so the container needs no
+# network access to livetiming endpoints (blocked from Quix Cloud IPs at runtime).
+# If livetiming is unreachable at build time this step will fail, which is
+# intentional — the image must not be built without real data.
+RUN python3 -c "\
+import os, fastf1; \
+os.makedirs('/app/ff1_cache', exist_ok=True); \
+fastf1.Cache.enable_cache('/app/ff1_cache'); \
+session = fastf1.get_session(2023, 1, 'R'); \
+session.load(telemetry=True, laps=True, weather=False, messages=False); \
+lap_count = len(session.laps); \
+assert lap_count > 0, 'FastF1 session laps empty — livetiming unreachable at build time'; \
+print('Cache populated:', lap_count, 'laps loaded for', session.event[\"EventName\"]); \
+"
+
 ENTRYPOINT ["python3", "main.py"]
