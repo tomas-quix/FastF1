@@ -35,6 +35,13 @@ def sanitize(obj):
 
 
 def main():
+    import logging
+    # Make FastF1 loggers propagate exceptions with full tracebacks
+    logging.getLogger("fastf1").setLevel(logging.DEBUG)
+    for handler in logging.root.handlers:
+        handler.setLevel(logging.DEBUG)
+    logger = logging.getLogger(__name__)
+
     year = int(os.environ["YEAR"])
     event = os.environ["EVENT"]
     session_type = os.environ["SESSION_TYPE"]
@@ -52,15 +59,15 @@ def main():
     os.makedirs(cache_dir, exist_ok=True)
     fastf1.Cache.enable_cache(cache_dir)
 
+    session = fastf1.get_session(year, event, session_type)
     try:
-        session = fastf1.get_session(year, event, session_type)
         session.load(telemetry=True, weather=True, messages=False)
-    except Exception as exc:
-        print(f"[FastF1 Source] ERROR: Failed to load session: {exc}", file=sys.stderr)
+    except Exception:
+        logger.exception("session.load() raised an exception")
         sys.exit(1)
 
     app = Application(
-        extra_config={
+        producer_extra_config={
             "linger.ms": 200,
             "batch.size": 1000000,
         }
