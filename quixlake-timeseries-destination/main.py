@@ -14,6 +14,7 @@ File paths follow the workspace-aware structure:
 import os
 import re
 import logging
+import json as _json
 
 from quixstreams import Application
 from quixstreams.sinks.core.quix_ts_datalake_sink import QuixTSDataLakeSink
@@ -81,6 +82,24 @@ if not _TABLE_NAME_PATTERN.match(table_name):
 
 # Workspace ID (automatically injected by Quix platform)
 workspace_id = os.getenv("Quix__Workspace__Id", "")
+
+# Inject blob storage config from individual env vars when platform doesn't inject the full JSON
+if not os.environ.get("Quix__BlobStorage__Connection__Json"):
+    _provider = os.environ.get("BLOB_PROVIDER", "")
+    _bucket = os.environ.get("BLOB_BUCKET", "")
+    _access_key = os.environ.get("BLOB_ACCESS_KEY_ID", "")
+    _secret_key = os.environ.get("BLOB_SECRET_ACCESS_KEY", "")
+    _service_url = os.environ.get("BLOB_SERVICE_URL", "")
+    if _provider and _bucket and _access_key and _secret_key:
+        _cfg = {"Provider": _provider, "S3Compatible": {"BucketName": _bucket, "AccessKeyId": _access_key, "SecretAccessKey": _secret_key}}
+        if _service_url:
+            _cfg["S3Compatible"]["ServiceUrl"] = _service_url
+        os.environ["Quix__BlobStorage__Connection__Json"] = _json.dumps(_cfg)
+
+if not os.environ.get("Quix__Lakehouse__Catalog__Url"):
+    _cat = os.environ.get("CATALOG_URL_OVERRIDE", "")
+    if _cat:
+        os.environ["Quix__Lakehouse__Catalog__Url"] = _cat
 
 # Initialize QuixLakeSink
 # Note: Blob storage credentials are configured via Quix__BlobStorage__Connection__Json
