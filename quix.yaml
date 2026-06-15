@@ -1,0 +1,60 @@
+metadata:
+  version: 1.0
+
+deployments:
+  - name: FastF1 Source
+    application: fastf1-source
+    deploymentType: Job
+    version: latest
+    desiredStatus: Stopped
+    resources:
+      cpu: 500
+      memory: 500
+      replicas: 1
+    state:
+      enabled: true
+      size: 1
+    variables:
+      - name: output_results
+        inputType: OutputTopic
+        value: f1-session-results
+      - name: output_laps
+        inputType: OutputTopic
+        value: f1-laps
+      - name: output_telemetry
+        inputType: OutputTopic
+        value: f1-telemetry
+      - name: output_weather
+        inputType: OutputTopic
+        value: f1-weather
+      - name: YEAR
+        inputType: FreeText
+        value: "2024"
+      - name: GRAND_PRIX
+        inputType: FreeText
+        value: "Monaco"
+      - name: SESSION_TYPE
+        inputType: FreeText
+        value: "R"
+
+topics:
+  - name: f1-session-results
+    configuration:
+      partitions: 2
+      replicationFactor: 2
+      retentionInMinutes: 10080
+  - name: f1-laps
+    configuration:
+      partitions: 2
+      replicationFactor: 2
+      retentionInMinutes: 10080
+  - name: f1-telemetry
+    configuration:
+      partitions: 4
+      replicationFactor: 2
+      retentionInMinutes: 10080
+  - name: f1-weather
+    configuration:
+      partitions: 2
+      replicationFactor: 2
+      retentionInMinutes: 10080
