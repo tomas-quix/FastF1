@@ -78,6 +78,8 @@ deployments:
         cpu: 200
         memory: 500
     desiredStatus: Running
+    blobStorage:
+      bind: true
     variables:
       - name: input
         inputType: InputTopic
@@ -118,6 +120,8 @@ deployments:
         cpu: 200
         memory: 500
     desiredStatus: Running
+    blobStorage:
+      bind: true
     variables:
       - name: input
         inputType: InputTopic
@@ -140,6 +144,8 @@ deployments:
         cpu: 200
         memory: 500
     desiredStatus: Running
+    blobStorage:
+      bind: true
     variables:
       - name: input
         inputType: InputTopic
@@ -162,6 +168,8 @@ deployments:
         cpu: 200
         memory: 500
     desiredStatus: Running
+    blobStorage:
+      bind: true
     variables:
       - name: input
         inputType: InputTopic
@@ -184,6 +192,8 @@ deployments:
         cpu: 200
         memory: 500
     desiredStatus: Running
+    blobStorage:
+      bind: true
     variables:
       - name: input
         inputType: InputTopic
@@ -206,6 +216,8 @@ deployments:
         cpu: 200
         memory: 500
     desiredStatus: Running
+    blobStorage:
+      bind: true
     variables:
       - name: input
         inputType: InputTopic
@@ -228,6 +240,8 @@ deployments:
         cpu: 200
         memory: 500
     desiredStatus: Running
+    blobStorage:
+      bind: true
     variables:
       - name: input
         inputType: InputTopic
@@ -250,6 +264,8 @@ deployments:
         cpu: 200
         memory: 500
     desiredStatus: Running
+    blobStorage:
+      bind: true
     variables:
       - name: input
         inputType: InputTopic
@@ -272,6 +288,8 @@ deployments:
         cpu: 200
         memory: 500
     desiredStatus: Running
+    blobStorage:
+      bind: true
     variables:
       - name: input
         inputType: InputTopic
@@ -294,6 +312,8 @@ deployments:
         cpu: 200
         memory: 500
     desiredStatus: Running
+    blobStorage:
+      bind: true
     variables:
       - name: input
         inputType: InputTopic
@@ -316,6 +336,8 @@ deployments:
         cpu: 200
         memory: 500
     desiredStatus: Running
+    blobStorage:
+      bind: true
     variables:
       - name: input
         inputType: InputTopic
@@ -338,6 +360,8 @@ deployments:
         cpu: 200
         memory: 500
     desiredStatus: Running
+    blobStorage:
+      bind: true
     variables:
       - name: input
         inputType: InputTopic
@@ -360,6 +384,8 @@ deployments:
         cpu: 200
         memory: 500
     desiredStatus: Running
+    blobStorage:
+      bind: true
     variables:
       - name: input
         inputType: InputTopic
