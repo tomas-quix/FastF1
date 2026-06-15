@@ -1,0 +1,94 @@
+name: OpenF1 Import
+language: python
+variables:
+  - name: YEAR
+    inputType: FreeText
+    description: "F1 season year (e.g. 2024)"
+    required: true
+  - name: MEETING_NAME
+    inputType: FreeText
+    description: "Grand Prix name or substring (e.g. Bahrain). Case-insensitive partial match supported."
+    required: true
+  - name: SESSION_TYPE
+    inputType: FreeText
+    description: "Session type: Race, Qualifying, Sprint, Sprint Qualifying, Practice_1, Practice_2, Practice_3"
+    defaultValue: "Race"
+    required: true
+  - name: DRIVER_NUMBER
+    inputType: FreeText
+    description: "Optional: filter to a specific driver number (leave blank for all drivers)"
+    defaultValue: ""
+    required: false
+  - name: BATCH_SIZE
+    inputType: FreeText
+    description: "Number of records per Kafka produce batch"
+    defaultValue: "500"
+    required: false
+  - name: output_car_data
+    inputType: OutputTopic
+    description: "Car telemetry data topic"
+    defaultValue: openf1-car-data
+    required: true
+  - name: output_laps
+    inputType: OutputTopic
+    description: "Lap data topic"
+    defaultValue: openf1-laps
+    required: true
+  - name: output_drivers
+    inputType: OutputTopic
+    description: "Driver data topic"
+    defaultValue: openf1-drivers
+    required: true
+  - name: output_intervals
+    inputType: OutputTopic
+    description: "Interval data topic"
+    defaultValue: openf1-intervals
+    required: true
+  - name: output_location
+    inputType: OutputTopic
+    description: "Location data topic"
+    defaultValue: openf1-location
+    required: true
+  - name: output_meetings
+    inputType: OutputTopic
+    description: "Meetings data topic"
+    defaultValue: openf1-meetings
+    required: true
+  - name: output_pit
+    inputType: OutputTopic
+    description: "Pit stop data topic"
+    defaultValue: openf1-pit
+    required: true
+  - name: output_position
+    inputType: OutputTopic
+    description: "Position data topic"
+    defaultValue: openf1-position
+    required: true
+  - name: output_race_control
+    inputType: OutputTopic
+    description: "Race control data topic"
+    defaultValue: openf1-race-control
+    required: true
+  - name: output_sessions
+    inputType: OutputTopic
+    description: "Sessions data topic"
+    defaultValue: openf1-sessions
+    required: true
+  - name: output_stints
+    inputType: OutputTopic
+    description: "Stints data topic"
+    defaultValue: openf1-stints
+    required: true
+  - name: output_team_radio
+    inputType: OutputTopic
+    description: "Team radio data topic"
+    defaultValue: openf1-team-radio
+    required: true
+  - name: output_weather
+    inputType: OutputTopic
+    description: "Weather data topic"
+    defaultValue: openf1-weather
+    required: true
+dockerfile: build/dockerfile
+runEntryPoint: main.py
+defaultFile: main.py

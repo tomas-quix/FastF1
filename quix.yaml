@@ -1,0 +1,135 @@
+metadata:
+  version: 1.0
+
+deployments:
+  - name: OpenF1 Import
+    application: openf1-import
+    deploymentType: Job
+    version: latest
+    desiredStatus: Stopped
+    resources:
+      cpu: 500
+      memory: 500
+      replicas: 1
+    variables:
+      - name: YEAR
+        inputType: FreeText
+        value: "2024"
+      - name: MEETING_NAME
+        inputType: FreeText
+        value: "Bahrain Grand Prix"
+      - name: SESSION_TYPE
+        inputType: FreeText
+        value: "Race"
+      - name: DRIVER_NUMBER
+        inputType: FreeText
+        value: ""
+      - name: BATCH_SIZE
+        inputType: FreeText
+        value: "500"
+      - name: output_car_data
+        inputType: OutputTopic
+        value: openf1-car-data
+      - name: output_laps
+        inputType: OutputTopic
+        value: openf1-laps
+      - name: output_drivers
+        inputType: OutputTopic
+        value: openf1-drivers
+      - name: output_intervals
+        inputType: OutputTopic
+        value: openf1-intervals
+      - name: output_location
+        inputType: OutputTopic
+        value: openf1-location
+      - name: output_meetings
+        inputType: OutputTopic
+        value: openf1-meetings
+      - name: output_pit
+        inputType: OutputTopic
+        value: openf1-pit
+      - name: output_position
+        inputType: OutputTopic
+        value: openf1-position
+      - name: output_race_control
+        inputType: OutputTopic
+        value: openf1-race-control
+      - name: output_sessions
+        inputType: OutputTopic
+        value: openf1-sessions
+      - name: output_stints
+        inputType: OutputTopic
+        value: openf1-stints
+      - name: output_team_radio
+        inputType: OutputTopic
+        value: openf1-team-radio
+      - name: output_weather
+        inputType: OutputTopic
+        value: openf1-weather
+
+topics:
+  - name: openf1-car-data
+    configuration:
+      partitions: 2
+      retentionInMinutes: 10080
+      replicationFactor: 2
+  - name: openf1-laps
+    configuration:
+      partitions: 2
+      retentionInMinutes: 10080
+      replicationFactor: 2
+  - name: openf1-drivers
+    configuration:
+      partitions: 2
+      retentionInMinutes: 10080
+      replicationFactor: 2
+  - name: openf1-intervals
+    configuration:
+      partitions: 2
+      retentionInMinutes: 10080
+      replicationFactor: 2
+  - name: openf1-location
+    configuration:
+      partitions: 2
+      retentionInMinutes: 10080
+      replicationFactor: 2
+  - name: openf1-meetings
+    configuration:
+      partitions: 2
+      retentionInMinutes: 10080
+      replicationFactor: 2
+  - name: openf1-pit
+    configuration:
+      partitions: 2
+      retentionInMinutes: 10080
+      replicationFactor: 2
+  - name: openf1-position
+    configuration:
+      partitions: 2
+      retentionInMinutes: 10080
+      replicationFactor: 2
+  - name: openf1-race-control
+    configuration:
+      partitions: 2
+      retentionInMinutes: 10080
+      replicationFactor: 2
+  - name: openf1-sessions
+    configuration:
+      partitions: 2
+      retentionInMinutes: 10080
+      replicationFactor: 2
+  - name: openf1-stints
+    configuration:
+      partitions: 2
+      retentionInMinutes: 10080
+      replicationFactor: 2
+  - name: openf1-team-radio
+    configuration:
+      partitions: 2
+      retentionInMinutes: 10080
+      replicationFactor: 2
+  - name: openf1-weather
+    configuration:
+      partitions: 2
+      retentionInMinutes: 10080
+      replicationFactor: 2
