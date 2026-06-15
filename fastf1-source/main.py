@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 YEAR = int(os.environ.get("YEAR", "2023"))
 ROUND = int(os.environ.get("ROUND", "1"))
 
+os.makedirs("/tmp/ff1_cache", exist_ok=True)
 fastf1.Cache.enable_cache("/tmp/ff1_cache")
 
 
