@@ -1,7 +1,6 @@
 import os
 import sys
 import time
-import json
 import logging
 import requests
 from dotenv import load_dotenv
@@ -31,6 +30,9 @@ ENDPOINTS = [
     ("team_radio",    "output_team_radio",     True,  "driver_number"),
     ("weather",       "output_weather",        False, None),
 ]
+
+# Endpoints that MUST be fetched per-driver (bulk requests return 422)
+PER_DRIVER_ENDPOINTS = {"car_data", "location"}
 
 
 def resolve_session_key(year, meeting_name, session_type):
@@ -90,6 +92,19 @@ def resolve_session_key(year, meeting_name, session_type):
     return session_key
 
 
+def fetch_drivers_for_session(session_key):
+    """Fetch all driver numbers for a given session."""
+    url = f"{BASE_URL}/drivers"
+    params = {"session_key": session_key}
+    logger.info("Fetching driver list for session %s ...", session_key)
+    resp = requests.get(url, params=params, timeout=30)
+    resp.raise_for_status()
+    drivers = resp.json()
+    driver_numbers = sorted({d["driver_number"] for d in drivers if "driver_number" in d})
+    logger.info("  -> Found %d drivers: %s", len(driver_numbers), driver_numbers)
+    return driver_numbers
+
+
 def fetch_endpoint(endpoint, session_key, driver_number=None, supports_driver_filter=False):
     """Fetch all records from an OpenF1 endpoint for the given session."""
     url = f"{BASE_URL}/{endpoint}"
@@ -113,7 +128,7 @@ def fetch_endpoint_with_retry(endpoint, session_key, driver_number=None,
             return fetch_endpoint(endpoint, session_key, driver_number, supports_driver_filter)
         except requests.exceptions.HTTPError as e:
             status = e.response.status_code if e.response is not None else 0
-            if status in (429, 500, 502, 503, 504) and attempt < max_retries - 1:
+            if status not in (400, 401, 403, 404, 422) and attempt < max_retries - 1:
                 wait_time = 2 ** (attempt + 1)
                 logger.warning("HTTP %d on %s, retrying in %ds...", status, endpoint, wait_time)
                 time.sleep(wait_time)
@@ -129,11 +144,8 @@ def produce_records(producer, topic, records, key_field, batch_size):
         batch = records[i : i + batch_size]
         for record in batch:
             key = str(record.get(key_field, "")) if key_field else None
-            producer.produce(
-                topic=topic,
-                key=key,
-                value=json.dumps(record, default=str).encode("utf-8"),
-            )
+            msg = topic.serialize(key=key, value=record)
+            producer.produce(topic=topic, key=msg.key, value=msg.value)
         produced += len(batch)
     # Flush after all batches for this endpoint
     producer.flush()
@@ -162,9 +174,18 @@ def main():
     for endpoint, env_var, _, _ in ENDPOINTS:
         topic_name = os.environ.get(env_var)
         if topic_name:
-            topics[endpoint] = app.topic(topic_name, value_serializer="bytes")
+            topics[endpoint] = app.topic(topic_name, value_serializer="json")
 
-    # Step 3: Fetch and produce for each endpoint
+    # Step 3: Fetch driver list for per-driver endpoints
+    all_driver_numbers = []
+    if not driver_number:
+        try:
+            all_driver_numbers = fetch_drivers_for_session(session_key)
+        except Exception as e:
+            logger.error("Failed to fetch drivers list: %s", e)
+            logger.warning("Per-driver endpoints (car_data, location) will be skipped.")
+
+    # Step 4: Fetch and produce for each endpoint
     total_records = 0
     start_time = time.time()
 
@@ -175,22 +196,50 @@ def main():
                 continue
 
             ep_start = time.time()
-            try:
-                records = fetch_endpoint_with_retry(
-                    endpoint, session_key, driver_number, supports_driver
-                )
-            except Exception as e:
-                logger.error("Failed to fetch %s: %s", endpoint, e)
-                continue
 
-            if not records:
-                logger.info("  -> No records for %s, skipping.", endpoint)
-                continue
+            # Per-driver endpoints need individual driver fetches when no specific driver set
+            if endpoint in PER_DRIVER_ENDPOINTS and not driver_number:
+                if not all_driver_numbers:
+                    logger.warning("Skipping %s — no drivers available", endpoint)
+                    continue
 
-            produced = produce_records(producer, topics[endpoint], records, key_field, batch_size)
-            elapsed = time.time() - ep_start
-            total_records += produced
-            logger.info("  -> Produced %d records to %s in %.1fs", produced, os.environ.get(env_var), elapsed)
+                ep_records = 0
+                for dn in all_driver_numbers:
+                    try:
+                        records = fetch_endpoint_with_retry(
+                            endpoint, session_key, str(dn), supports_driver
+                        )
+                    except Exception as e:
+                        logger.error("Failed to fetch %s for driver %s: %s", endpoint, dn, e)
+                        continue
+
+                    if records:
+                        produced = produce_records(producer, topics[endpoint], records, key_field, batch_size)
+                        ep_records += produced
+                        logger.info("  -> Driver %s: %d records", dn, produced)
+
+                    time.sleep(0.2)
+
+                elapsed = time.time() - ep_start
+                total_records += ep_records
+                logger.info("  -> Produced %d total records to %s in %.1fs", ep_records, os.environ.get(env_var), elapsed)
+            else:
+                try:
+                    records = fetch_endpoint_with_retry(
+                        endpoint, session_key, driver_number, supports_driver
+                    )
+                except Exception as e:
+                    logger.error("Failed to fetch %s: %s", endpoint, e)
+                    continue
+
+                if not records:
+                    logger.info("  -> No records for %s, skipping.", endpoint)
+                    continue
+
+                produced = produce_records(producer, topics[endpoint], records, key_field, batch_size)
+                elapsed = time.time() - ep_start
+                total_records += produced
+                logger.info("  -> Produced %d records to %s in %.1fs", produced, os.environ.get(env_var), elapsed)
 
             # Be polite to the API
             time.sleep(0.5)
