@@ -32,7 +32,7 @@ deployments:
         value: f1-weather
       - name: YEAR
         inputType: FreeText
-        value: "2024"
+        value: "2025"
       - name: EVENT
         inputType: FreeText
         value: "Monaco"
