@@ -1,0 +1,41 @@
+name: FastF1 Source
+language: python
+variables:
+  - name: F1_YEAR
+    inputType: FreeText
+    description: F1 season year (e.g. 2024)
+    defaultValue: "2024"
+    required: true
+  - name: F1_GRAND_PRIX
+    inputType: FreeText
+    description: Grand Prix name as FastF1 expects it (e.g. Monaco, Bahrain, Silverstone)
+    defaultValue: "Monaco"
+    required: true
+  - name: F1_SESSION
+    inputType: FreeText
+    description: "Session type: Race, Qualifying, Sprint, FP1, FP2, FP3, Sprint Qualifying"
+    defaultValue: "Race"
+    required: true
+  - name: output_telemetry
+    inputType: OutputTopic
+    description: Car telemetry output topic (high-frequency per driver)
+    defaultValue: f1-telemetry
+    required: true
+  - name: output_laps
+    inputType: OutputTopic
+    description: Lap summaries output topic
+    defaultValue: f1-laps
+    required: true
+  - name: output_weather
+    inputType: OutputTopic
+    description: Weather data output topic
+    defaultValue: f1-weather
+    required: true
+  - name: output_results
+    inputType: OutputTopic
+    description: Session results output topic
+    defaultValue: f1-results
+    required: true
+dockerfile: build/dockerfile
+runEntryPoint: main.py
+defaultFile: main.py
