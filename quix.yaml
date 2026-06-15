@@ -1,32 +1,35 @@
+# Quix Project Descriptor
+# This file describes the data pipeline and configuration of resources of a Quix Project.
+
 metadata:
   version: 1.0
 
+# This section describes the Deployments of the data pipeline
 deployments:
   - name: OpenF1 Import
     application: openf1-import
-    deploymentType: Job
     version: latest
-    desiredStatus: Stopped
+    deploymentType: Job
     resources:
-      cpu: 500
-      memory: 500
-      replicas: 1
+      limits:
+        cpu: 500
+        memory: 500
     variables:
       - name: YEAR
         inputType: FreeText
-        value: "2024"
+        value: 2024
       - name: MEETING_NAME
         inputType: FreeText
-        value: "Bahrain Grand Prix"
+        value: Bahrain Grand Prix
       - name: SESSION_TYPE
         inputType: FreeText
-        value: "Race"
+        value: Race
       - name: DRIVER_NUMBER
         inputType: FreeText
-        value: ""
+        value: ''
       - name: BATCH_SIZE
         inputType: FreeText
-        value: "500"
+        value: 500
       - name: output_car_data
         inputType: OutputTopic
         value: openf1-car-data
@@ -66,37 +69,55 @@ deployments:
       - name: output_weather
         inputType: OutputTopic
         value: openf1-weather
-  - name: "Sink - Car Data"
+  - name: Sink - Car Data
     application: QuixLake Timeseries Sink
-    deploymentType: Service
     version: latest
-    desiredStatus: Running
+    deploymentType: Service
     resources:
-      cpu: 200
-      memory: 500
-      replicas: 1
+      limits:
+        cpu: 200
+        memory: 500
+    desiredStatus: Running
     variables:
       - name: input
         inputType: InputTopic
+        description: Input topic to consume from
+        required: true
         value: openf1-car-data
       - name: TABLE_NAME
         inputType: FreeText
+        description: Target table name in the data lake
+        required: true
         value: openf1_car_data
       - name: AUTO_OFFSET_RESET
         inputType: FreeText
+        description: Kafka consumer auto offset reset (earliest or latest)
         value: earliest
       - name: CONSUMER_GROUP
         inputType: FreeText
+        description: Kafka consumer group ID
         value: sink-car-data
-  - name: "Sink - Laps"
+      - name: HIVE_COLUMNS
+        inputType: FreeText
+        description: Comma-separated list of Hive partition columns
+        value: ''
+      - name: BATCH_SIZE
+        inputType: FreeText
+        description: Number of records per batch commit
+        value: 1000
+      - name: COMMIT_INTERVAL
+        inputType: FreeText
+        description: Commit interval in seconds
+        value: 30
+  - name: Sink - Laps
     application: QuixLake Timeseries Sink
-    deploymentType: Service
     version: latest
-    desiredStatus: Running
+    deploymentType: Service
     resources:
-      cpu: 200
-      memory: 500
-      replicas: 1
+      limits:
+        cpu: 200
+        memory: 500
+    desiredStatus: Running
     variables:
       - name: input
         inputType: InputTopic
@@ -110,15 +131,15 @@ deployments:
       - name: CONSUMER_GROUP
         inputType: FreeText
         value: sink-laps
-  - name: "Sink - Drivers"
+  - name: Sink - Drivers
     application: QuixLake Timeseries Sink
-    deploymentType: Service
     version: latest
-    desiredStatus: Running
+    deploymentType: Service
     resources:
-      cpu: 200
-      memory: 500
-      replicas: 1
+      limits:
+        cpu: 200
+        memory: 500
+    desiredStatus: Running
     variables:
       - name: input
         inputType: InputTopic
@@ -132,15 +153,15 @@ deployments:
       - name: CONSUMER_GROUP
         inputType: FreeText
         value: sink-drivers
-  - name: "Sink - Intervals"
+  - name: Sink - Intervals
     application: QuixLake Timeseries Sink
-    deploymentType: Service
     version: latest
-    desiredStatus: Running
+    deploymentType: Service
     resources:
-      cpu: 200
-      memory: 500
-      replicas: 1
+      limits:
+        cpu: 200
+        memory: 500
+    desiredStatus: Running
     variables:
       - name: input
         inputType: InputTopic
@@ -154,15 +175,15 @@ deployments:
       - name: CONSUMER_GROUP
         inputType: FreeText
         value: sink-intervals
-  - name: "Sink - Location"
+  - name: Sink - Location
     application: QuixLake Timeseries Sink
-    deploymentType: Service
     version: latest
-    desiredStatus: Running
+    deploymentType: Service
     resources:
-      cpu: 200
-      memory: 500
-      replicas: 1
+      limits:
+        cpu: 200
+        memory: 500
+    desiredStatus: Running
     variables:
       - name: input
         inputType: InputTopic
@@ -176,15 +197,15 @@ deployments:
       - name: CONSUMER_GROUP
         inputType: FreeText
         value: sink-location
-  - name: "Sink - Meetings"
+  - name: Sink - Meetings
     application: QuixLake Timeseries Sink
-    deploymentType: Service
     version: latest
-    desiredStatus: Running
+    deploymentType: Service
     resources:
-      cpu: 200
-      memory: 500
-      replicas: 1
+      limits:
+        cpu: 200
+        memory: 500
+    desiredStatus: Running
     variables:
       - name: input
         inputType: InputTopic
@@ -198,15 +219,15 @@ deployments:
       - name: CONSUMER_GROUP
         inputType: FreeText
         value: sink-meetings
-  - name: "Sink - Pit"
+  - name: Sink - Pit
     application: QuixLake Timeseries Sink
-    deploymentType: Service
     version: latest
-    desiredStatus: Running
+    deploymentType: Service
     resources:
-      cpu: 200
-      memory: 500
-      replicas: 1
+      limits:
+        cpu: 200
+        memory: 500
+    desiredStatus: Running
     variables:
       - name: input
         inputType: InputTopic
@@ -220,15 +241,15 @@ deployments:
       - name: CONSUMER_GROUP
         inputType: FreeText
         value: sink-pit
-  - name: "Sink - Position"
+  - name: Sink - Position
     application: QuixLake Timeseries Sink
-    deploymentType: Service
     version: latest
-    desiredStatus: Running
+    deploymentType: Service
     resources:
-      cpu: 200
-      memory: 500
-      replicas: 1
+      limits:
+        cpu: 200
+        memory: 500
+    desiredStatus: Running
     variables:
       - name: input
         inputType: InputTopic
@@ -242,15 +263,15 @@ deployments:
       - name: CONSUMER_GROUP
         inputType: FreeText
         value: sink-position
-  - name: "Sink - Race Control"
+  - name: Sink - Race Control
     application: QuixLake Timeseries Sink
-    deploymentType: Service
     version: latest
-    desiredStatus: Running
+    deploymentType: Service
     resources:
-      cpu: 200
-      memory: 500
-      replicas: 1
+      limits:
+        cpu: 200
+        memory: 500
+    desiredStatus: Running
     variables:
       - name: input
         inputType: InputTopic
@@ -264,15 +285,15 @@ deployments:
       - name: CONSUMER_GROUP
         inputType: FreeText
         value: sink-race-control
-  - name: "Sink - Sessions"
+  - name: Sink - Sessions
     application: QuixLake Timeseries Sink
-    deploymentType: Service
     version: latest
-    desiredStatus: Running
+    deploymentType: Service
     resources:
-      cpu: 200
-      memory: 500
-      replicas: 1
+      limits:
+        cpu: 200
+        memory: 500
+    desiredStatus: Running
     variables:
       - name: input
         inputType: InputTopic
@@ -286,15 +307,15 @@ deployments:
       - name: CONSUMER_GROUP
         inputType: FreeText
         value: sink-sessions
-  - name: "Sink - Stints"
+  - name: Sink - Stints
     application: QuixLake Timeseries Sink
-    deploymentType: Service
     version: latest
-    desiredStatus: Running
+    deploymentType: Service
     resources:
-      cpu: 200
-      memory: 500
-      replicas: 1
+      limits:
+        cpu: 200
+        memory: 500
+    desiredStatus: Running
     variables:
       - name: input
         inputType: InputTopic
@@ -308,15 +329,15 @@ deployments:
       - name: CONSUMER_GROUP
         inputType: FreeText
         value: sink-stints
-  - name: "Sink - Team Radio"
+  - name: Sink - Team Radio
     application: QuixLake Timeseries Sink
-    deploymentType: Service
     version: latest
-    desiredStatus: Running
+    deploymentType: Service
     resources:
-      cpu: 200
-      memory: 500
-      replicas: 1
+      limits:
+        cpu: 200
+        memory: 500
+    desiredStatus: Running
     variables:
       - name: input
         inputType: InputTopic
@@ -330,15 +351,15 @@ deployments:
       - name: CONSUMER_GROUP
         inputType: FreeText
         value: sink-team-radio
-  - name: "Sink - Weather"
+  - name: Sink - Weather
     application: QuixLake Timeseries Sink
-    deploymentType: Service
     version: latest
-    desiredStatus: Running
+    deploymentType: Service
     resources:
-      cpu: 200
-      memory: 500
-      replicas: 1
+      limits:
+        cpu: 200
+        memory: 500
+    desiredStatus: Running
     variables:
       - name: input
         inputType: InputTopic
@@ -353,69 +374,70 @@ deployments:
         inputType: FreeText
         value: sink-weather
 
+# This section describes the Topics of the data pipeline
 topics:
   - name: openf1-car-data
     configuration:
       partitions: 2
-      retentionInMinutes: 10080
       replicationFactor: 2
+      retentionInMinutes: 10080
   - name: openf1-laps
     configuration:
       partitions: 2
-      retentionInMinutes: 10080
       replicationFactor: 2
+      retentionInMinutes: 10080
   - name: openf1-drivers
     configuration:
       partitions: 2
-      retentionInMinutes: 10080
       replicationFactor: 2
+      retentionInMinutes: 10080
   - name: openf1-intervals
     configuration:
       partitions: 2
-      retentionInMinutes: 10080
       replicationFactor: 2
+      retentionInMinutes: 10080
   - name: openf1-location
     configuration:
       partitions: 2
-      retentionInMinutes: 10080
       replicationFactor: 2
+      retentionInMinutes: 10080
   - name: openf1-meetings
     configuration:
       partitions: 2
-      retentionInMinutes: 10080
       replicationFactor: 2
+      retentionInMinutes: 10080
   - name: openf1-pit
     configuration:
       partitions: 2
-      retentionInMinutes: 10080
       replicationFactor: 2
+      retentionInMinutes: 10080
   - name: openf1-position
     configuration:
       partitions: 2
-      retentionInMinutes: 10080
       replicationFactor: 2
+      retentionInMinutes: 10080
   - name: openf1-race-control
     configuration:
       partitions: 2
-      retentionInMinutes: 10080
       replicationFactor: 2
+      retentionInMinutes: 10080
   - name: openf1-sessions
     configuration:
       partitions: 2
-      retentionInMinutes: 10080
       replicationFactor: 2
+      retentionInMinutes: 10080
   - name: openf1-stints
     configuration:
       partitions: 2
-      retentionInMinutes: 10080
       replicationFactor: 2
+      retentionInMinutes: 10080
   - name: openf1-team-radio
     configuration:
       partitions: 2
-      retentionInMinutes: 10080
       replicationFactor: 2
+      retentionInMinutes: 10080
   - name: openf1-weather
     configuration:
       partitions: 2
-      retentionInMinutes: 10080
       replicationFactor: 2
+      retentionInMinutes: 10080
