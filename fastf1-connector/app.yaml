@@ -1,11 +1,31 @@
 name: FastF1 connector
 language: python
 variables:
-  - name: output
+  - name: output_telemetry
     inputType: OutputTopic
-    description: Name of the output topic to write into
-    defaultValue: csv-data
+    description: Car telemetry output topic
+    defaultValue: f1-car-telemetry
     required: true
+  - name: output_lap_data
+    inputType: OutputTopic
+    description: Lap timing output topic
+    defaultValue: f1-lap-data
+    required: true
+  - name: YEAR
+    inputType: FreeText
+    description: Season year, e.g. 2023
+    defaultValue: "2023"
+    required: true
+  - name: ROUND
+    inputType: FreeText
+    description: Round number (e.g. 1) or GP name (e.g. Bahrain)
+    defaultValue: "1"
+    required: true
+  - name: SESSION
+    inputType: FreeText
+    description: Session identifier — R (Race), Q (Quali), FP1/FP2/FP3, S (Sprint)
+    defaultValue: "R"
+    required: false
 dockerfile: dockerfile
 runEntryPoint: main.py
 defaultFile: main.py
