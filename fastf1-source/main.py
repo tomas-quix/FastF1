@@ -66,12 +66,23 @@ def main():
 
     print(f"[FastF1 Source] Loading {year} {event} {session_type} ...")
 
+    import logging
+    import http.client
+    http.client.HTTPConnection.debuglevel = 1
+    logging.basicConfig(level=logging.DEBUG)
+    requests_log = logging.getLogger("urllib3")
+    requests_log.setLevel(logging.DEBUG)
+    requests_log.propagate = True
+
     cache_dir = "/app/cache"
     print(f"[FastF1 Source] Creating cache directory: {cache_dir}")
     os.makedirs(cache_dir, exist_ok=True)
     fastf1.Cache.enable_cache(cache_dir)
 
     session = fastf1.get_session(year, event, session_type)
+    print(f"[FastF1 Source] Session api_path: {session.api_path}")
+    print(f"[FastF1 Source] Session event name: {session.event['EventName']}")
+    print(f"[FastF1 Source] Session date: {session.event['EventDate']}")
     try:
         session.load(laps=True, telemetry=True, weather=True, messages=False)
     except Exception:
