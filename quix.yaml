@@ -37,8 +37,6 @@ deployments:
     application: quixlake-timeseries-destination
     version: latest
     deploymentType: Service
-    blobStorage:
-      bind: true
     resources:
       limits:
         cpu: 200
@@ -72,12 +70,12 @@ deployments:
       - name: CONSUMER_GROUP
         inputType: FreeText
         value: f1-lap-data-sink
+    blobStorage:
+      bind: true
   - name: F1 Telemetry Sink
     application: quixlake-timeseries-destination
     version: latest
     deploymentType: Service
-    blobStorage:
-      bind: true
     resources:
       limits:
         cpu: 200
@@ -141,6 +139,41 @@ deployments:
         inputType: FreeText
         description: How many files can be written in parallel
         value: 10
+    blobStorage:
+      bind: true
+  - name: FastF1 connector
+    application: fastf1-connector
+    version: latest
+    deploymentType: Job
+    resources:
+      limits:
+        cpu: 100
+        memory: 150
+    variables:
+      - name: output_telemetry
+        inputType: OutputTopic
+        description: Car telemetry output topic
+        required: true
+        value: f1-car-telemetry
+      - name: output_lap_data
+        inputType: OutputTopic
+        description: Lap timing output topic
+        required: true
+        value: f1-lap-data
+      - name: YEAR
+        inputType: FreeText
+        description: Season year, e.g. 2023
+        required: true
+        value: 2023
+      - name: ROUND
+        inputType: FreeText
+        description: Round number (e.g. 1) or GP name (e.g. Bahrain)
+        required: true
+        value: 1
+      - name: SESSION
+        inputType: FreeText
+        description: Session identifier — R (Race), Q (Quali), FP1/FP2/FP3, S (Sprint)
+        value: R
 
 # This section describes the Topics of the data pipeline
 topics:
