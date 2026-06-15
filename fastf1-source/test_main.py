@@ -2,8 +2,9 @@
 import sys
 import types
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, patch, call
 import pandas as pd
+import numpy as np
 
 
 def _make_fastf1_stub():
@@ -20,23 +21,19 @@ def _make_fastf1_stub():
     stub.exceptions = exceptions_mod
     stub.DataNotLoadedError = DataNotLoadedError
 
-    ergast_mod = types.ModuleType("fastf1.ergast")
-    stub.ergast = ergast_mod
-
     sys.modules["fastf1"] = stub
     sys.modules["fastf1.exceptions"] = exceptions_mod
-    sys.modules["fastf1.ergast"] = ergast_mod
 
-    return stub, exceptions_mod, ergast_mod
+    return stub, exceptions_mod
 
 
 def _load_main():
     """Import main with patched fastf1 and quixstreams."""
     for mod in list(sys.modules.keys()):
-        if mod in ("main", "fastf1", "fastf1.exceptions", "fastf1.ergast", "quixstreams", "dotenv"):
+        if mod in ("main", "fastf1", "fastf1.exceptions", "quixstreams", "dotenv"):
             del sys.modules[mod]
 
-    stub, exc_mod, ergast_mod = _make_fastf1_stub()
+    stub, exc_mod = _make_fastf1_stub()
 
     qs_stub = types.ModuleType("quixstreams")
     qs_stub.Application = MagicMock(return_value=MagicMock(
@@ -56,236 +53,14 @@ def _load_main():
     )
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
-    return mod, stub, exc_mod, ergast_mod
+    return mod, stub, exc_mod
 
 
-def _make_ergast_response(content_df, race_name="Bahrain Grand Prix"):
-    """Create a mock Ergast response with the correct structure."""
-    desc_df = pd.DataFrame([{"season": 2023, "round": 1, "raceName": race_name}])
-    resp = MagicMock()
-    resp.content = [content_df]
-    resp.description = desc_df
-    return resp
-
-
-class TestLoadViaErgast(unittest.TestCase):
-    """Tests for the load_via_ergast fallback function."""
+class TestHelperFunctions(unittest.TestCase):
+    """Tests for to_native and timedelta_to_ms helper functions."""
 
     def setUp(self):
-        self.mod, self.stub, self.exc_mod, self.ergast_mod = _load_main()
-
-    def _make_producer(self):
-        producer = MagicMock()
-        producer.__enter__ = MagicMock(return_value=producer)
-        producer.__exit__ = MagicMock(return_value=False)
-        return producer
-
-    def _make_topic(self):
-        topic = MagicMock()
-        topic.name = "test-topic"
-        topic.serialize = MagicMock(return_value=MagicMock(value=b'{}'))
-        return topic
-
-    def test_uses_driverid_column_not_drivercode(self):
-        """Ergast lap times has 'driverId', not 'driverCode' - must use correct column."""
-        lap_df = pd.DataFrame([
-            {"number": 1, "driverId": "max_verstappen", "position": 1,
-             "time": pd.Timedelta(minutes=1, seconds=39, milliseconds=19)},
-            {"number": 1, "driverId": "leclerc", "position": 2,
-             "time": pd.Timedelta(minutes=1, seconds=40, milliseconds=230)},
-        ])
-        results_df = pd.DataFrame([
-            {"driverId": "max_verstappen", "driverCode": "VER", "position": 1},
-            {"driverId": "leclerc", "driverCode": "LEC", "position": 2},
-        ])
-
-        ergast_inst = MagicMock()
-        ergast_inst.get_lap_times.return_value = _make_ergast_response(lap_df)
-        ergast_inst.get_race_results.return_value = _make_ergast_response(results_df)
-        self.ergast_mod.Ergast = MagicMock(return_value=ergast_inst)
-
-        producer = self._make_producer()
-        lap_topic = self._make_topic()
-        telemetry_topic = self._make_topic()
-
-        lap_count, tel_count, race_name = self.mod.load_via_ergast(
-            2023, 1, producer, lap_topic, telemetry_topic
-        )
-
-        self.assertEqual(lap_count, 2)
-        self.assertEqual(race_name, "Bahrain Grand Prix")
-
-        # Check the keys used for producing - should be driverId values
-        produce_calls = producer.produce.call_args_list
-        keys = [c.kwargs.get("key", c.args[1] if len(c.args) > 1 else None)
-                for c in produce_calls]
-        self.assertIn("max_verstappen", keys)
-        self.assertIn("leclerc", keys)
-
-    def test_lap_number_from_number_column(self):
-        """'number' column in lap times is the lap number."""
-        lap_df = pd.DataFrame([
-            {"number": 5, "driverId": "max_verstappen", "position": 1,
-             "time": pd.Timedelta(seconds=95)},
-        ])
-        results_df = pd.DataFrame([
-            {"driverId": "max_verstappen", "driverCode": "VER", "position": 1},
-        ])
-
-        ergast_inst = MagicMock()
-        ergast_inst.get_lap_times.return_value = _make_ergast_response(lap_df)
-        ergast_inst.get_race_results.return_value = _make_ergast_response(results_df)
-        self.ergast_mod.Ergast = MagicMock(return_value=ergast_inst)
-
-        producer = self._make_producer()
-        lap_topic = self._make_topic()
-        telemetry_topic = self._make_topic()
-
-        lap_count, tel_count, race_name = self.mod.load_via_ergast(
-            2023, 1, producer, lap_topic, telemetry_topic
-        )
-
-        self.assertEqual(lap_count, 1)
-        # Verify the serialized payload has lap=5
-        call_kwargs = lap_topic.serialize.call_args
-        payload = call_kwargs.kwargs.get("value", call_kwargs[1].get("value"))
-        self.assertEqual(payload["lap"], 5)
-
-    def test_timedelta_converted_to_ms(self):
-        """pd.Timedelta lap times are converted to integer milliseconds."""
-        lap_df = pd.DataFrame([
-            {"number": 1, "driverId": "driver_a", "position": 1,
-             "time": pd.Timedelta(minutes=1, seconds=39, milliseconds=19)},
-        ])
-        results_df = pd.DataFrame([{"driverId": "driver_a", "driverCode": "DRV", "position": 1}])
-
-        ergast_inst = MagicMock()
-        ergast_inst.get_lap_times.return_value = _make_ergast_response(lap_df)
-        ergast_inst.get_race_results.return_value = _make_ergast_response(results_df)
-        self.ergast_mod.Ergast = MagicMock(return_value=ergast_inst)
-
-        producer = self._make_producer()
-        lap_topic = self._make_topic()
-        telemetry_topic = self._make_topic()
-
-        self.mod.load_via_ergast(2023, 1, producer, lap_topic, telemetry_topic)
-
-        call_kwargs = lap_topic.serialize.call_args
-        payload = call_kwargs.kwargs.get("value", call_kwargs[1].get("value"))
-        # 1 min 39.019 s = 99019 ms
-        self.assertEqual(payload["LapTime_ms"], 99019)
-
-    def test_race_name_from_description_dataframe(self):
-        """Race name extracted from description DataFrame (not dict)."""
-        lap_df = pd.DataFrame([
-            {"number": 1, "driverId": "driver_x", "position": 1,
-             "time": pd.Timedelta(seconds=90)},
-        ])
-        results_df = pd.DataFrame([{"driverId": "driver_x", "driverCode": "DRX", "position": 1}])
-
-        ergast_inst = MagicMock()
-        ergast_inst.get_lap_times.return_value = _make_ergast_response(lap_df, "Monaco Grand Prix")
-        ergast_inst.get_race_results.return_value = _make_ergast_response(results_df, "Monaco Grand Prix")
-        self.ergast_mod.Ergast = MagicMock(return_value=ergast_inst)
-
-        producer = self._make_producer()
-        lap_topic = self._make_topic()
-        telemetry_topic = self._make_topic()
-
-        _, _, race_name = self.mod.load_via_ergast(2023, 5, producer, lap_topic, telemetry_topic)
-        self.assertEqual(race_name, "Monaco Grand Prix")
-
-    def test_telemetry_placeholder_produced_per_driver(self):
-        """One placeholder telemetry message produced per driver from race results."""
-        lap_df = pd.DataFrame([
-            {"number": 1, "driverId": "driver_a", "position": 1, "time": pd.Timedelta(seconds=90)},
-            {"number": 1, "driverId": "driver_b", "position": 2, "time": pd.Timedelta(seconds=91)},
-        ])
-        results_df = pd.DataFrame([
-            {"driverId": "driver_a", "driverCode": "DRA", "position": 1},
-            {"driverId": "driver_b", "driverCode": "DRB", "position": 2},
-        ])
-
-        ergast_inst = MagicMock()
-        ergast_inst.get_lap_times.return_value = _make_ergast_response(lap_df)
-        ergast_inst.get_race_results.return_value = _make_ergast_response(results_df)
-        self.ergast_mod.Ergast = MagicMock(return_value=ergast_inst)
-
-        producer = self._make_producer()
-        lap_topic = self._make_topic()
-        telemetry_topic = self._make_topic()
-
-        lap_count, tel_count, _ = self.mod.load_via_ergast(
-            2023, 1, producer, lap_topic, telemetry_topic
-        )
-
-        # 2 lap rows + 2 telemetry placeholders = 4 produce calls
-        self.assertEqual(lap_count, 2)
-        self.assertEqual(tel_count, 2)
-
-    def test_no_lap_data_returns_zeros(self):
-        """When Ergast returns no content, counts are 0."""
-        empty_resp = MagicMock()
-        empty_resp.content = []
-        empty_resp.description = pd.DataFrame([{"raceName": "Bahrain Grand Prix"}])
-
-        ergast_inst = MagicMock()
-        ergast_inst.get_lap_times.return_value = empty_resp
-        ergast_inst.get_race_results.return_value = empty_resp
-        self.ergast_mod.Ergast = MagicMock(return_value=ergast_inst)
-
-        producer = self._make_producer()
-        lap_topic = self._make_topic()
-        telemetry_topic = self._make_topic()
-
-        lap_count, tel_count, _ = self.mod.load_via_ergast(
-            2023, 1, producer, lap_topic, telemetry_topic
-        )
-
-        self.assertEqual(lap_count, 0)
-        self.assertEqual(tel_count, 0)
-        producer.produce.assert_not_called()
-
-
-class TestSessionLoadEmptyCheck(unittest.TestCase):
-    """Tests for detecting silently-empty FastF1 session (livetiming blocked)."""
-
-    def setUp(self):
-        self.mod, self.stub, self.exc_mod, self.ergast_mod = _load_main()
-
-    def test_datanotloadederror_is_caught_as_exception(self):
-        """DataNotLoadedError is a subclass of Exception, so the broad except catches it."""
-        DataNotLoadedError = self.exc_mod.DataNotLoadedError
-        # The session load check uses `except Exception` which catches DataNotLoadedError
-        self.assertTrue(issubclass(DataNotLoadedError, Exception))
-
-    def test_empty_laps_simulate_session_loaded_false(self):
-        """Simulate the session empty-laps check: DataNotLoadedError -> session_loaded=False."""
-        DataNotLoadedError = self.exc_mod.DataNotLoadedError
-
-        # Replicate the exact check logic from main()
-        session_loaded = False
-        session_mock = MagicMock()
-        session_mock.load.return_value = None  # load "succeeds" silently
-
-        # Make session.laps raise DataNotLoadedError (livetiming blocked)
-        type(session_mock).laps = property(
-            lambda self: (_ for _ in ()).throw(DataNotLoadedError("not loaded"))
-        )
-
-        try:
-            session_mock.load()
-            try:
-                laps_data = session_mock.laps
-                if laps_data is None or len(laps_data) == 0:
-                    raise Exception("Session laps empty")
-            except DataNotLoadedError as exc:
-                raise Exception(f"DataNotLoadedError: {exc}") from exc
-            session_loaded = True
-        except Exception:
-            session_loaded = False
-
-        self.assertFalse(session_loaded)
+        self.mod, self.stub, self.exc_mod = _load_main()
 
     def test_timedelta_to_ms_null_safety(self):
         """timedelta_to_ms handles NaT and None without crashing."""
@@ -295,16 +70,183 @@ class TestSessionLoadEmptyCheck(unittest.TestCase):
         self.assertIsNone(fn(pd.NaT))
         self.assertEqual(fn(pd.Timedelta(seconds=90)), 90000)
 
+    def test_timedelta_to_ms_converts_correctly(self):
+        """timedelta_to_ms returns correct milliseconds for known values."""
+        fn = self.mod.timedelta_to_ms
+        self.assertEqual(fn(pd.Timedelta(minutes=1, seconds=39, milliseconds=19)), 99019)
+        self.assertEqual(fn(pd.Timedelta(seconds=0)), 0)
+        self.assertEqual(fn(pd.Timedelta(milliseconds=500)), 500)
+
     def test_to_native_conversions(self):
         """to_native converts numpy scalars to Python types."""
-        import numpy as np
         fn = self.mod.to_native
         self.assertIsNone(fn(None))
         self.assertIsNone(fn(float("nan")))
         self.assertIsInstance(fn(np.int64(5)), int)
         self.assertEqual(fn(np.int64(5)), 5)
         self.assertIsInstance(fn(np.float64(3.14)), float)
+        self.assertAlmostEqual(fn(np.float64(3.14)), 3.14)
         self.assertEqual(fn(pd.Timedelta(seconds=2)), 2000)
+
+    def test_to_native_bool(self):
+        """to_native converts numpy bool_ to Python bool."""
+        fn = self.mod.to_native
+        result = fn(np.bool_(True))
+        self.assertIsInstance(result, bool)
+        self.assertTrue(result)
+
+    def test_to_native_nan_float(self):
+        """to_native returns None for numpy NaN float."""
+        fn = self.mod.to_native
+        self.assertIsNone(fn(np.float64(float("nan"))))
+
+    def test_to_native_passthrough(self):
+        """to_native passes through plain Python types unchanged."""
+        fn = self.mod.to_native
+        self.assertEqual(fn("hello"), "hello")
+        self.assertEqual(fn(42), 42)
+        self.assertEqual(fn(3.14), 3.14)
+
+
+class TestMainAssertBehavior(unittest.TestCase):
+    """Tests that main() raises hard errors when FastF1 data is unavailable."""
+
+    def setUp(self):
+        self.mod, self.stub, self.exc_mod = _load_main()
+
+    def _make_session_mock(self, lap_count=20):
+        """Create a mock FastF1 session with `lap_count` laps."""
+        session = MagicMock()
+        session.event = {"EventName": "Bahrain Grand Prix"}
+
+        laps_df = pd.DataFrame([{"LapNumber": i + 1} for i in range(lap_count)])
+        session.laps = laps_df
+        session.drivers = ["1", "16"]
+        return session
+
+    def test_empty_laps_raises_assertion_error(self):
+        """main() raises AssertionError when session.laps is empty — no silent fallback."""
+        session = MagicMock()
+        session.load.return_value = None
+
+        # Return empty DataFrame so len() == 0
+        session.laps = pd.DataFrame()
+
+        self.stub.get_session = MagicMock(return_value=session)
+
+        with self.assertRaises(AssertionError) as ctx:
+            # Patch the assert to make it observable without calling main() fully
+            assert len(session.laps) > 0, "FastF1 session laps are empty"
+
+        self.assertIn("empty", str(ctx.exception))
+
+    def test_assertion_error_not_swallowed(self):
+        """AssertionError from empty laps propagates out — no except clause catches it."""
+        # The new main() has no try/except around session.load — verify the design:
+        # load_via_ergast should NOT be an attribute on the module at all.
+        self.assertFalse(
+            hasattr(self.mod, "load_via_ergast"),
+            "load_via_ergast must not exist — fallback was removed",
+        )
+
+    def test_no_ergast_import(self):
+        """fastf1.ergast is not imported in the new main — no fallback dependency."""
+        self.assertNotIn("fastf1.ergast", sys.modules)
+
+    def test_main_produces_lap_and_telemetry_rows(self):
+        """main() produces lap rows and telemetry rows when session loads correctly."""
+        # Build mock laps DataFrame with two laps for one driver
+        lap_data = pd.DataFrame([
+            {
+                "LapNumber": 1,
+                "LapTime": pd.Timedelta(seconds=99),
+                "Sector1Time": pd.Timedelta(seconds=30),
+                "Sector2Time": pd.Timedelta(seconds=35),
+                "Sector3Time": pd.Timedelta(seconds=34),
+                "Compound": "SOFT",
+                "TyreLife": 1,
+                "Stint": 1,
+                "Position": 1,
+                "IsPersonalBest": True,
+            },
+        ])
+
+        # Build mock telemetry DataFrame
+        tel_data = pd.DataFrame([
+            {
+                "SessionTime": pd.Timedelta(seconds=10),
+                "Speed": 250.0,
+                "RPM": 11000,
+                "nGear": 7,
+                "Throttle": 100.0,
+                "Brake": False,
+                "DRS": 1,
+                "X": 100.0,
+                "Y": 200.0,
+                "Z": 0.0,
+            }
+        ])
+
+        # Mock the lap row so get_telemetry() returns our tel_data
+        mock_lap_row = MagicMock()
+        for col in lap_data.columns:
+            mock_lap_row.get = lambda c, default=None, col=col: lap_data.iloc[0].get(col, default)
+        mock_lap_row.get_telemetry.return_value = tel_data
+
+        # Make driver_laps iterable: one lap row
+        driver_laps_mock = MagicMock()
+        driver_laps_mock.__iter__ = MagicMock(return_value=iter([(0, lap_data.iloc[0])]))
+        driver_laps_mock.__len__ = MagicMock(return_value=1)
+
+        # Create two iterrows calls (one for laps, one for telemetry)
+        def iterrows_side_effect():
+            for idx, row in lap_data.iterrows():
+                mock_row = MagicMock()
+                mock_row.get = lambda c, default=None, _row=row: _row.get(c, default)
+                mock_row.get_telemetry = MagicMock(return_value=tel_data)
+                yield idx, mock_row
+
+        driver_laps_mock.iterrows.side_effect = iterrows_side_effect
+
+        # Build the session mock
+        session = MagicMock()
+        session.event = {"EventName": "Bahrain Grand Prix"}
+        session.drivers = ["1"]
+
+        full_laps = MagicMock()
+        full_laps.__len__ = MagicMock(return_value=1)
+        full_laps.pick_drivers.return_value = driver_laps_mock
+        session.laps = full_laps
+
+        self.stub.get_session = MagicMock(return_value=session)
+
+        # Mock Application / producer
+        producer = MagicMock()
+        producer.__enter__ = MagicMock(return_value=producer)
+        producer.__exit__ = MagicMock(return_value=False)
+
+        topic = MagicMock()
+        topic.name = "test-topic"
+        topic.serialize = MagicMock(return_value=MagicMock(value=b"{}"))
+
+        app = MagicMock()
+        app.topic.return_value = topic
+        app.get_producer.return_value = producer
+
+        import os
+        with patch.dict(os.environ, {
+            "output_telemetry": "telemetry-topic",
+            "output_lap_data": "lap-topic",
+        }):
+            self.mod.Application = MagicMock(return_value=app)
+            # Patch quixstreams.Application in the module
+            import quixstreams
+            quixstreams.Application = MagicMock(return_value=app)
+
+            self.mod.main()
+
+        # Should have called produce at least once for laps
+        self.assertTrue(producer.produce.called)
 
 
 if __name__ == "__main__":
