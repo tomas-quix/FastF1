@@ -8,4 +8,4 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 RUN find | grep requirements.txt | xargs -I '{}' python3 -m pip install -r '{}'
-ENTRYPOINT ["python3", "fastf1-source/main.py"]
+ENTRYPOINT ["python3", "main.py"]
