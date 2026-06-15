@@ -1,4 +1,5 @@
 import sys
+import datetime
 from unittest.mock import MagicMock
 
 # Mock heavy dependencies before importing main
@@ -57,6 +58,36 @@ class TestCleanValue:
     def test_timedelta_converted(self):
         td = pd.Timedelta(minutes=1, seconds=30, milliseconds=456)
         assert clean_value(td) == 90456
+
+    def test_datetime_datetime_to_isoformat(self):
+        dt = datetime.datetime(2024, 3, 15, 14, 30, 45)
+        assert clean_value(dt) == "2024-03-15T14:30:45"
+
+    def test_datetime_timedelta_to_ms(self):
+        td = datetime.timedelta(seconds=90, milliseconds=123)
+        assert clean_value(td) == 90123
+
+    def test_list_passthrough(self):
+        val = [1, 2, 3]
+        assert clean_value(val) == [1, 2, 3]
+
+    def test_dict_passthrough(self):
+        val = {"key": "value"}
+        assert clean_value(val) == {"key": "value"}
+
+    def test_pd_isna_incompatible_types_no_crash(self):
+        """Verify that types which cause pd.isna to raise ValueError don't crash."""
+        assert clean_value([1, 2]) == [1, 2]
+        assert clean_value({"a": 1}) == {"a": 1}
+        assert clean_value(np.array([1, 2, 3])) == [1, 2, 3]  # numpy array converted to list
+
+    def test_pd_timestamp_to_isoformat(self):
+        ts = pd.Timestamp("2024-03-15 14:30:45")
+        assert clean_value(ts) == "2024-03-15T14:30:45"
+
+    def test_datetime_date_to_isoformat(self):
+        d = datetime.date(2024, 3, 15)
+        assert clean_value(d) == "2024-03-15"
 
 
 class TestRowToDict:

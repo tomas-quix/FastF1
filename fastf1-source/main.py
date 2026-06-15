@@ -1,8 +1,10 @@
 import os
 import sys
 import time
+import datetime
 import logging
 
+import numpy as np
 import fastf1
 import pandas as pd
 from dotenv import load_dotenv
@@ -23,12 +25,29 @@ def timedelta_to_ms(td):
 
 def clean_value(val):
     """Convert numpy/pandas types to JSON-safe Python types."""
-    if pd.isna(val):
+    if val is None:
         return None
-    if hasattr(val, 'item'):  # numpy scalar
-        return val.item()
+    # Handle pd.isna-compatible types safely
+    try:
+        if pd.isna(val):
+            return None
+    except (ValueError, TypeError):
+        pass  # val is a type that pd.isna can't handle (list, dict, etc.)
+
     if isinstance(val, pd.Timedelta):
         return timedelta_to_ms(val)
+    if isinstance(val, datetime.timedelta):
+        return int(val.total_seconds() * 1000)
+    if isinstance(val, (datetime.datetime, pd.Timestamp)):
+        return val.isoformat()
+    if isinstance(val, datetime.date):
+        return val.isoformat()
+    if isinstance(val, np.ndarray):
+        return val.tolist()
+    if hasattr(val, 'item'):  # numpy scalar
+        return val.item()
+    if isinstance(val, (list, dict)):
+        return val  # already JSON-safe
     return val
 
 
@@ -181,7 +200,21 @@ def main():
         try:
             logger.info(f"Loading session data (attempt {attempt + 1}/{max_retries})...")
             session.load()
+
+            # Validate that data actually loaded — session.load() doesn't raise on API failures
+            has_laps = session.laps is not None and not session.laps.empty
+            has_results = session.results is not None and not session.results.empty
+            has_weather = session.weather_data is not None and not session.weather_data.empty
+
+            if not has_laps and not has_results and not has_weather:
+                raise RuntimeError("Session loaded but all data layers are empty — FastF1 API likely unavailable")
+
             logger.info("Session loaded successfully")
+            loaded_layers = []
+            if has_results: loaded_layers.append("results")
+            if has_laps: loaded_layers.append(f"laps ({len(session.laps)} rows)")
+            if has_weather: loaded_layers.append(f"weather ({len(session.weather_data)} rows)")
+            logger.info(f"Available data: {', '.join(loaded_layers)}")
             break
         except Exception as e:
             if attempt < max_retries - 1:
@@ -204,10 +237,29 @@ def main():
     topic_weather = app.topic(os.environ['output_weather'], value_serializer='json')
 
     with app.get_producer() as producer:
-        results_count = produce_session_results(producer, topic_results, session, session_key)
-        laps_count = produce_laps(producer, topic_laps, session, session_key)
-        telemetry_count = produce_telemetry(producer, topic_telemetry, session, session_key)
-        weather_count = produce_weather(producer, topic_weather, session, session_key)
+        try:
+            results_count = produce_session_results(producer, topic_results, session, session_key)
+        except Exception as e:
+            logger.error(f"Error producing session results: {e}")
+            results_count = 0
+
+        try:
+            laps_count = produce_laps(producer, topic_laps, session, session_key)
+        except Exception as e:
+            logger.error(f"Error producing laps: {e}")
+            laps_count = 0
+
+        try:
+            telemetry_count = produce_telemetry(producer, topic_telemetry, session, session_key)
+        except Exception as e:
+            logger.error(f"Error producing telemetry: {e}")
+            telemetry_count = 0
+
+        try:
+            weather_count = produce_weather(producer, topic_weather, session, session_key)
+        except Exception as e:
+            logger.error(f"Error producing weather: {e}")
+            weather_count = 0
 
         producer.flush()
 
