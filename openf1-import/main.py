@@ -145,7 +145,7 @@ def produce_records(producer, topic, records, key_field, batch_size):
         for record in batch:
             key = str(record.get(key_field, "")) if key_field else None
             msg = topic.serialize(key=key, value=record)
-            producer.produce(topic=topic, key=msg.key, value=msg.value)
+            producer.produce(topic=topic.name, key=msg.key, value=msg.value)
         produced += len(batch)
     # Flush after all batches for this endpoint
     producer.flush()

@@ -359,7 +359,7 @@ class TestProduceRecords(unittest.TestCase):
         produce_records(mock_producer, topic, [{"driver_number": 1}], "driver_number", batch_size=500)
 
         mock_producer.produce.assert_called_once_with(
-            topic=topic, key=b"serialized-key", value=b"serialized-value"
+            topic=topic.name, key=b"serialized-key", value=b"serialized-value"
         )
 
     def test_produce_with_no_key_field(self):
