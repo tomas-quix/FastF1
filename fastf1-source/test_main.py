@@ -9,7 +9,37 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from main import safe_value
+from main import safe_get_dataframe, safe_value
+
+
+class TestSafeGetDataframe:
+    def test_valid_dataframe_returns_it(self):
+        mock_session = MagicMock()
+        df = pd.DataFrame({"col": [1, 2, 3]})
+        mock_session.results = df
+        result = safe_get_dataframe(mock_session, "results")
+        assert result is not None
+        assert len(result) == 3
+
+    def test_empty_dataframe_returns_none(self):
+        mock_session = MagicMock()
+        mock_session.laps = pd.DataFrame()
+        result = safe_get_dataframe(mock_session, "laps")
+        assert result is None
+
+    def test_attribute_error_returns_none(self):
+        mock_session = MagicMock()
+        type(mock_session).weather_data = property(
+            lambda self: (_ for _ in ()).throw(AttributeError("_laps not set"))
+        )
+        result = safe_get_dataframe(mock_session, "weather_data")
+        assert result is None
+
+    def test_none_attribute_returns_none(self):
+        mock_session = MagicMock()
+        mock_session.results = None
+        result = safe_get_dataframe(mock_session, "results")
+        assert result is None
 
 
 class TestSafeValueNaN:

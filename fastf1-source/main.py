@@ -12,6 +12,17 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 logger = logging.getLogger(__name__)
 
 
+def safe_get_dataframe(session, attr_name):
+    """Safely get a DataFrame attribute from a session, returning None if unavailable."""
+    try:
+        df = getattr(session, attr_name, None)
+        if df is not None and not df.empty:
+            return df
+    except Exception as e:
+        logger.warning("Could not access session.%s: %s", attr_name, e)
+    return None
+
+
 def safe_value(val):
     """Convert pandas NaN/NaT to None for JSON serialization."""
     try:
@@ -40,17 +51,12 @@ def serialize_key(key):
     return key.encode("utf-8") if isinstance(key, str) else key
 
 
-def produce_results(producer, topic, session, year, gp, session_type):
+def produce_results(producer, topic, results_df, year, gp, session_type):
     """Produce session results to Kafka."""
-    results = session.results
-    if results is None or results.empty:
-        logger.warning("No results data available")
-        return 0
-
     key = f"{year}_{gp}_{session_type}"
     count = 0
 
-    for _, row in results.iterrows():
+    for _, row in results_df.iterrows():
         payload = {
             "Abbreviation": safe_value(row.get("Abbreviation")),
             "DriverNumber": safe_value(row.get("DriverNumber")),
@@ -81,16 +87,11 @@ def produce_results(producer, topic, session, year, gp, session_type):
     return count
 
 
-def produce_laps(producer, topic, session):
+def produce_laps(producer, topic, laps_df):
     """Produce lap data to Kafka."""
-    laps = session.laps
-    if laps is None or laps.empty:
-        logger.warning("No laps data available")
-        return 0
-
     count = 0
 
-    for _, row in laps.iterrows():
+    for _, row in laps_df.iterrows():
         driver = safe_value(row.get("Driver"))
         key = driver if driver else "UNKNOWN"
 
@@ -131,17 +132,12 @@ def produce_laps(producer, topic, session):
     return count
 
 
-def produce_weather(producer, topic, session, year, gp, session_type):
+def produce_weather(producer, topic, weather_df, year, gp, session_type):
     """Produce weather data to Kafka."""
-    weather = session.weather_data
-    if weather is None or weather.empty:
-        logger.warning("No weather data available")
-        return 0
-
     key = f"{year}_{gp}_{session_type}"
     count = 0
 
-    for _, row in weather.iterrows():
+    for _, row in weather_df.iterrows():
         payload = {
             "Time": safe_value(row.get("Time")),
             "AirTemp": safe_value(row.get("AirTemp")),
@@ -163,14 +159,9 @@ def produce_weather(producer, topic, session, year, gp, session_type):
     return count
 
 
-def produce_telemetry(producer, topic, session):
+def produce_telemetry(producer, topic, session, laps_df):
     """Produce telemetry data to Kafka for each driver."""
-    laps = session.laps
-    if laps is None or laps.empty:
-        logger.warning("No laps data available for telemetry")
-        return 0
-
-    drivers = laps["Driver"].unique()
+    drivers = laps_df["Driver"].unique()
     total_count = 0
 
     for driver_abbr in drivers:
@@ -234,7 +225,32 @@ def main():
     # Load session data
     session = fastf1.get_session(year, gp, session_type)
     session.load(telemetry=True, weather=True, messages=False)
-    logger.info("Session loaded successfully")
+    logger.info("Session loaded (check warnings above for any partial failures)")
+
+    # Check what data is available
+    results_df = safe_get_dataframe(session, "results")
+    laps_df = safe_get_dataframe(session, "laps")
+    weather_df = safe_get_dataframe(session, "weather_data")
+
+    available = []
+    if results_df is not None:
+        available.append(f"results ({len(results_df)} rows)")
+    if laps_df is not None:
+        available.append(f"laps ({len(laps_df)} rows)")
+    if weather_df is not None:
+        available.append(f"weather ({len(weather_df)} rows)")
+
+    if not available:
+        logger.error(
+            "No data could be loaded for %d %s %s. "
+            "This may indicate the FastF1 version is incompatible with the current F1 API, "
+            "or the requested session does not exist. "
+            "Check the warnings above for details.",
+            year, gp, session_type
+        )
+        return  # Exit gracefully, no crash
+
+    logger.info("Available data: %s", ", ".join(available))
 
     # Create Quix Streams app and topics
     app = Application()
@@ -245,14 +261,24 @@ def main():
 
     # Produce all data
     with app.get_producer() as producer:
-        results_count = produce_results(
-            producer, topic_results, session, year, gp, session_type
-        )
-        laps_count = produce_laps(producer, topic_laps, session)
-        weather_count = produce_weather(
-            producer, topic_weather, session, year, gp, session_type
-        )
-        telemetry_count = produce_telemetry(producer, topic_telemetry, session)
+        results_count = 0
+        laps_count = 0
+        weather_count = 0
+        telemetry_count = 0
+
+        if results_df is not None:
+            results_count = produce_results(
+                producer, topic_results, results_df, year, gp, session_type
+            )
+
+        if laps_df is not None:
+            laps_count = produce_laps(producer, topic_laps, laps_df)
+            telemetry_count = produce_telemetry(producer, topic_telemetry, session, laps_df)
+
+        if weather_df is not None:
+            weather_count = produce_weather(
+                producer, topic_weather, weather_df, year, gp, session_type
+            )
 
     logger.info(
         "Import complete:\n"
