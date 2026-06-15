@@ -66,6 +66,253 @@ deployments:
       - name: output_weather
         inputType: OutputTopic
         value: openf1-weather
+  - name: "Sink - Car Data"
+    deploymentType: Managed
+    libraryItemId: data-lake-sink
+    version: latest
+    desiredStatus: Running
+    resources:
+      cpu: 500
+      memory: 1500
+      replicas: 1
+    variables:
+      - name: topic
+        inputType: InputTopic
+        value: openf1-car-data
+      - name: autoOffsetReset
+        inputType: FreeText
+        value: earliest
+      - name: commitTimeInterval
+        inputType: FreeText
+        value: "60"
+  - name: "Sink - Laps"
+    deploymentType: Managed
+    libraryItemId: data-lake-sink
+    version: latest
+    desiredStatus: Running
+    resources:
+      cpu: 500
+      memory: 1500
+      replicas: 1
+    variables:
+      - name: topic
+        inputType: InputTopic
+        value: openf1-laps
+      - name: autoOffsetReset
+        inputType: FreeText
+        value: earliest
+      - name: commitTimeInterval
+        inputType: FreeText
+        value: "60"
+  - name: "Sink - Drivers"
+    deploymentType: Managed
+    libraryItemId: data-lake-sink
+    version: latest
+    desiredStatus: Running
+    resources:
+      cpu: 500
+      memory: 1500
+      replicas: 1
+    variables:
+      - name: topic
+        inputType: InputTopic
+        value: openf1-drivers
+      - name: autoOffsetReset
+        inputType: FreeText
+        value: earliest
+      - name: commitTimeInterval
+        inputType: FreeText
+        value: "60"
+  - name: "Sink - Intervals"
+    deploymentType: Managed
+    libraryItemId: data-lake-sink
+    version: latest
+    desiredStatus: Running
+    resources:
+      cpu: 500
+      memory: 1500
+      replicas: 1
+    variables:
+      - name: topic
+        inputType: InputTopic
+        value: openf1-intervals
+      - name: autoOffsetReset
+        inputType: FreeText
+        value: earliest
+      - name: commitTimeInterval
+        inputType: FreeText
+        value: "60"
+  - name: "Sink - Location"
+    deploymentType: Managed
+    libraryItemId: data-lake-sink
+    version: latest
+    desiredStatus: Running
+    resources:
+      cpu: 500
+      memory: 1500
+      replicas: 1
+    variables:
+      - name: topic
+        inputType: InputTopic
+        value: openf1-location
+      - name: autoOffsetReset
+        inputType: FreeText
+        value: earliest
+      - name: commitTimeInterval
+        inputType: FreeText
+        value: "60"
+  - name: "Sink - Meetings"
+    deploymentType: Managed
+    libraryItemId: data-lake-sink
+    version: latest
+    desiredStatus: Running
+    resources:
+      cpu: 500
+      memory: 1500
+      replicas: 1
+    variables:
+      - name: topic
+        inputType: InputTopic
+        value: openf1-meetings
+      - name: autoOffsetReset
+        inputType: FreeText
+        value: earliest
+      - name: commitTimeInterval
+        inputType: FreeText
+        value: "60"
+  - name: "Sink - Pit"
+    deploymentType: Managed
+    libraryItemId: data-lake-sink
+    version: latest
+    desiredStatus: Running
+    resources:
+      cpu: 500
+      memory: 1500
+      replicas: 1
+    variables:
+      - name: topic
+        inputType: InputTopic
+        value: openf1-pit
+      - name: autoOffsetReset
+        inputType: FreeText
+        value: earliest
+      - name: commitTimeInterval
+        inputType: FreeText
+        value: "60"
+  - name: "Sink - Position"
+    deploymentType: Managed
+    libraryItemId: data-lake-sink
+    version: latest
+    desiredStatus: Running
+    resources:
+      cpu: 500
+      memory: 1500
+      replicas: 1
+    variables:
+      - name: topic
+        inputType: InputTopic
+        value: openf1-position
+      - name: autoOffsetReset
+        inputType: FreeText
+        value: earliest
+      - name: commitTimeInterval
+        inputType: FreeText
+        value: "60"
+  - name: "Sink - Race Control"
+    deploymentType: Managed
+    libraryItemId: data-lake-sink
+    version: latest
+    desiredStatus: Running
+    resources:
+      cpu: 500
+      memory: 1500
+      replicas: 1
+    variables:
+      - name: topic
+        inputType: InputTopic
+        value: openf1-race-control
+      - name: autoOffsetReset
+        inputType: FreeText
+        value: earliest
+      - name: commitTimeInterval
+        inputType: FreeText
+        value: "60"
+  - name: "Sink - Sessions"
+    deploymentType: Managed
+    libraryItemId: data-lake-sink
+    version: latest
+    desiredStatus: Running
+    resources:
+      cpu: 500
+      memory: 1500
+      replicas: 1
+    variables:
+      - name: topic
+        inputType: InputTopic
+        value: openf1-sessions
+      - name: autoOffsetReset
+        inputType: FreeText
+        value: earliest
+      - name: commitTimeInterval
+        inputType: FreeText
+        value: "60"
+  - name: "Sink - Stints"
+    deploymentType: Managed
+    libraryItemId: data-lake-sink
+    version: latest
+    desiredStatus: Running
+    resources:
+      cpu: 500
+      memory: 1500
+      replicas: 1
+    variables:
+      - name: topic
+        inputType: InputTopic
+        value: openf1-stints
+      - name: autoOffsetReset
+        inputType: FreeText
+        value: earliest
+      - name: commitTimeInterval
+        inputType: FreeText
+        value: "60"
+  - name: "Sink - Team Radio"
+    deploymentType: Managed
+    libraryItemId: data-lake-sink
+    version: latest
+    desiredStatus: Running
+    resources:
+      cpu: 500
+      memory: 1500
+      replicas: 1
+    variables:
+      - name: topic
+        inputType: InputTopic
+        value: openf1-team-radio
+      - name: autoOffsetReset
+        inputType: FreeText
+        value: earliest
+      - name: commitTimeInterval
+        inputType: FreeText
+        value: "60"
+  - name: "Sink - Weather"
+    deploymentType: Managed
+    libraryItemId: data-lake-sink
+    version: latest
+    desiredStatus: Running
+    resources:
+      cpu: 500
+      memory: 1500
+      replicas: 1
+    variables:
+      - name: topic
+        inputType: InputTopic
+        value: openf1-weather
+      - name: autoOffsetReset
+        inputType: FreeText
+        value: earliest
+      - name: commitTimeInterval
+        inputType: FreeText
+        value: "60"
 
 topics:
   - name: openf1-car-data
