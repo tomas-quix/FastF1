@@ -1,3 +1,3 @@
-requests
 quixstreams>=3.0
+fastf1>=3.3.0
 python-dotenv

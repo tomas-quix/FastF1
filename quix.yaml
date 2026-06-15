@@ -9,7 +9,7 @@ deployments:
   - name: FastF1 Source
     application: fastf1-source
     version: latest
-    deploymentType: Service
+    deploymentType: Job
     resources:
       limits:
         cpu: 500
@@ -26,11 +26,6 @@ deployments:
         description: Lap timing output topic
         required: true
         value: f1-lap-data
-      - name: output_position
-        inputType: OutputTopic
-        description: Position data output topic
-        required: true
-        value: f1-position-data
       - name: YEAR
         inputType: FreeText
         description: e.g. 2023
@@ -147,75 +142,6 @@ deployments:
         inputType: FreeText
         description: How many files can be written in parallel
         value: 10
-  - name: F1 Position Sink
-    application: quixlake-timeseries-destination
-    version: latest
-    deploymentType: Service
-    blobStorage:
-      bind: true
-    resources:
-      limits:
-        cpu: 200
-        memory: 500
-    desiredStatus: Running
-    variables:
-      - name: input
-        inputType: InputTopic
-        description: Name of the Kafka input topic to consume from
-        required: true
-        value: f1-position-data
-      - name: TABLE_NAME
-        inputType: FreeText
-        description: Table name for data organization
-        value: f1-position-data
-      - name: HIVE_COLUMNS
-        inputType: FreeText
-        description: Comma-separated list of columns for Hive partitioning
-        value: year,round,race_name,driver_id
-      - name: TIMESTAMP_COLUMN
-        inputType: FreeText
-        description: Column containing timestamp values
-        value: timestamp
-      - name: AUTO_DISCOVER
-        inputType: FreeText
-        description: Automatically register table in REST Catalog on first write
-        value: true
-      - name: CATALOG_NAMESPACE
-        inputType: FreeText
-        description: Catalog namespace for table registration
-        value: default
-      - name: BATCH_SIZE
-        inputType: FreeText
-        description: Number of messages to batch before writing to storage
-        value: 1000
-      - name: COMMIT_INTERVAL
-        inputType: FreeText
-        description: Kafka commit interval in seconds
-        value: 30
-      - name: KAFKA_KEY_DESERIALIZER
-        inputType: FreeText
-        description: The key deserializer to use
-        value: str
-      - name: KAFKA_VALUE_DESERIALIZER
-        inputType: FreeText
-        description: The value deserializer to use
-        value: json
-      - name: CONSUMER_GROUP
-        inputType: FreeText
-        description: Kafka consumer group name
-        value: f1-position-sink
-      - name: AUTO_OFFSET_RESET
-        inputType: FreeText
-        description: Where to start consuming if no offset exists
-        value: earliest
-      - name: LOGLEVEL
-        inputType: FreeText
-        description: Application logging level
-        value: INFO
-      - name: MAX_WRITE_WORKERS
-        inputType: FreeText
-        description: How many files can be written in parallel
-        value: 10
 
 # This section describes the Topics of the data pipeline
 topics:
@@ -226,8 +152,4 @@ topics:
   - name: f1-lap-data
     configuration:
       partitions: 2
-      retentionInMinutes: 1440
-  - name: f1-position-data
-    configuration:
-      partitions: 4
       retentionInMinutes: 1440

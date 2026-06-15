@@ -11,11 +11,6 @@ variables:
     description: Lap timing output topic
     defaultValue: f1-lap-data
     required: true
-  - name: output_position
-    inputType: OutputTopic
-    description: Position data output topic
-    defaultValue: f1-position-data
-    required: true
   - name: YEAR
     inputType: FreeText
     description: "e.g. 2023"

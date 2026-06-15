@@ -1,7 +1,9 @@
 import os
-import time
+import math
 import logging
-import requests
+import fastf1
+import numpy as np
+import pandas as pd
 from dotenv import load_dotenv
 from quixstreams import Application
 
@@ -10,152 +12,145 @@ load_dotenv()
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
 
-YEAR = os.environ.get("YEAR", "2023")
-ROUND = os.environ.get("ROUND", "1")
-OUTPUT_TELEMETRY = os.environ.get("output_telemetry", "f1-car-telemetry")
-OUTPUT_LAP_DATA = os.environ.get("output_lap_data", "f1-lap-data")
-OUTPUT_POSITION = os.environ.get("output_position", "f1-position-data")
+YEAR = int(os.environ.get("YEAR", "2023"))
+ROUND = int(os.environ.get("ROUND", "1"))
 
-BASE_URL = "https://api.jolpi.ca/ergast/f1"
-
-app = Application()
-topic_telemetry = app.topic(OUTPUT_TELEMETRY, value_serializer="json")
-topic_lap_data = app.topic(OUTPUT_LAP_DATA, value_serializer="json")
-topic_position = app.topic(OUTPUT_POSITION, value_serializer="json")
+fastf1.Cache.enable_cache("/tmp/ff1_cache")
 
 
-def fetch_json(url):
-    resp = requests.get(url, timeout=30)
-    resp.raise_for_status()
-    return resp.json()
+def to_native(val):
+    """Convert numpy/pandas scalar types to native Python types."""
+    if val is None:
+        return None
+    if isinstance(val, float) and math.isnan(val):
+        return None
+    if isinstance(val, (np.integer,)):
+        return int(val)
+    if isinstance(val, (np.floating,)):
+        v = float(val)
+        return None if math.isnan(v) else v
+    if isinstance(val, (np.bool_,)):
+        return bool(val)
+    if isinstance(val, pd.Timedelta):
+        return int(val.total_seconds() * 1000)
+    if isinstance(val, pd.NaT.__class__):
+        return None
+    return val
 
 
-def stream_race_results(producer, year, round_num):
-    """Fetch race results and produce to lap data topic."""
-    url = f"{BASE_URL}/{year}/{round_num}/results.json?limit=100"
-    logger.info(f"Fetching race results: {url}")
-    data = fetch_json(url)
-    races = data.get("MRData", {}).get("RaceTable", {}).get("Races", [])
-    if not races:
-        logger.warning(f"No race results found for {year} round {round_num}")
-        return 0
-    race = races[0]
-    race_name = race.get("raceName", "Unknown")
-    results = race.get("Results", [])
-    count = 0
-    for result in results:
-        driver = result.get("Driver", {})
-        constructor = result.get("Constructor", {})
-        msg = {
-            "year": int(year),
-            "round": int(round_num),
-            "race_name": race_name,
-            "driver_id": driver.get("driverId"),
-            "driver_code": driver.get("code"),
-            "driver_name": f"{driver.get('givenName')} {driver.get('familyName')}",
-            "constructor": constructor.get("name"),
-            "grid": int(result.get("grid", 0)),
-            "position": result.get("position"),
-            "status": result.get("status"),
-            "points": float(result.get("points", 0)),
-            "laps": int(result.get("laps", 0)),
-            "fastest_lap_rank": result.get("FastestLap", {}).get("rank"),
-            "fastest_lap_time": result.get("FastestLap", {}).get("Time", {}).get("time"),
-            "fastest_lap_speed": result.get("FastestLap", {}).get("AverageSpeed", {}).get("speed"),
-        }
-        msg_serialized = topic_lap_data.serialize(key=driver.get("driverId", "unknown"), value=msg)
-        producer.produce(topic=topic_lap_data.name, key=msg_serialized.key, value=msg_serialized.value)
-        count += 1
-    logger.info(f"Produced {count} race result rows to {topic_lap_data.name}")
-    return count
-
-
-def stream_lap_times(producer, year, round_num):
-    """Fetch detailed lap times and produce to telemetry topic."""
-    offset = 0
-    limit = 100
-    total = 0
-    while True:
-        url = f"{BASE_URL}/{year}/{round_num}/laps.json?limit={limit}&offset={offset}"
-        logger.info(f"Fetching lap times (offset={offset}): {url}")
-        data = fetch_json(url)
-        mr = data.get("MRData", {})
-        total_available = int(mr.get("total", 0))
-        races = mr.get("RaceTable", {}).get("Races", [])
-        if not races:
-            break
-        laps = races[0].get("Laps", [])
-        if not laps:
-            break
-        race_name = races[0].get("raceName", "Unknown")
-        for lap in laps:
-            lap_number = int(lap.get("number", 0))
-            for timing in lap.get("Timings", []):
-                msg = {
-                    "year": int(year),
-                    "round": int(round_num),
-                    "race_name": race_name,
-                    "lap": lap_number,
-                    "driver_id": timing.get("driverId"),
-                    "position": int(timing.get("position", 0)),
-                    "lap_time": timing.get("time"),
-                }
-                msg_serialized = topic_telemetry.serialize(key=timing.get("driverId", "unknown"), value=msg)
-                producer.produce(topic=topic_telemetry.name, key=msg_serialized.key, value=msg_serialized.value)
-                total += 1
-        offset += limit
-        if offset >= total_available:
-            break
-        time.sleep(0.2)  # be polite to the API
-    logger.info(f"Produced {total} lap time rows to {topic_telemetry.name}")
-    return total
-
-
-def stream_pit_stops(producer, year, round_num):
-    """Fetch pit stop data and produce to position topic."""
-    url = f"{BASE_URL}/{year}/{round_num}/pitstops.json?limit=100"
-    logger.info(f"Fetching pit stops: {url}")
-    data = fetch_json(url)
-    races = data.get("MRData", {}).get("RaceTable", {}).get("Races", [])
-    if not races:
-        logger.warning(f"No pit stop data for {year} round {round_num}")
-        return 0
-    race = races[0]
-    race_name = race.get("raceName", "Unknown")
-    pit_stops = race.get("PitStops", [])
-    count = 0
-    for stop in pit_stops:
-        msg = {
-            "year": int(year),
-            "round": int(round_num),
-            "race_name": race_name,
-            "driver_id": stop.get("driverId"),
-            "stop": int(stop.get("stop", 0)),
-            "lap": int(stop.get("lap", 0)),
-            "time": stop.get("time"),
-            "duration": stop.get("duration"),
-        }
-        msg_serialized = topic_position.serialize(key=stop.get("driverId", "unknown"), value=msg)
-        producer.produce(topic=topic_position.name, key=msg_serialized.key, value=msg_serialized.value)
-        count += 1
-    logger.info(f"Produced {count} pit stop rows to {topic_position.name}")
-    return count
+def timedelta_to_ms(val):
+    """Convert a Timedelta (or NaT/None) to integer milliseconds."""
+    if val is None or (isinstance(val, float) and math.isnan(val)):
+        return None
+    try:
+        if pd.isnull(val):
+            return None
+    except (TypeError, ValueError):
+        pass
+    if isinstance(val, pd.Timedelta):
+        return int(val.total_seconds() * 1000)
+    return None
 
 
 def main():
-    logger.info(f"Starting F1 data source: year={YEAR}, round={ROUND}")
+    logger.info(f"Starting FastF1 source: year={YEAR}, round={ROUND}")
+
+    app = Application(consumer_group="fastf1-source")
+    telemetry_topic = app.topic(os.environ["output_telemetry"], value_serializer="json")
+    lap_topic = app.topic(os.environ["output_lap_data"], value_serializer="json")
+
+    logger.info("Loading FastF1 session (Race)...")
+    session = fastf1.get_session(YEAR, ROUND, "R")
+    session.load(telemetry=True, laps=True, weather=False)
+
+    race_name = session.event["EventName"]
+    logger.info(f"Session loaded: {race_name}")
+
+    telemetry_count = 0
+    lap_count = 0
+
     with app.get_producer() as producer:
-        while True:
-            try:
-                total = 0
-                total += stream_race_results(producer, YEAR, ROUND)
-                total += stream_lap_times(producer, YEAR, ROUND)
-                total += stream_pit_stops(producer, YEAR, ROUND)
-                logger.info(f"Cycle complete: {total} total messages produced. Sleeping 60s...")
-                time.sleep(60)
-            except Exception:
-                logger.exception("Error in main loop, retrying in 30s...")
-                time.sleep(30)
+        drivers = session.drivers
+        logger.info(f"Processing {len(drivers)} drivers")
+
+        for driver_id in drivers:
+            driver_laps = session.laps.pick_drivers(driver_id)
+            logger.info(f"Driver {driver_id}: {len(driver_laps)} laps")
+
+            # --- Lap data ---
+            for _, lap_row in driver_laps.iterrows():
+                lap_num = to_native(lap_row.get("LapNumber"))
+                payload = {
+                    "driver_id": str(driver_id),
+                    "lap": int(lap_num) if lap_num is not None else None,
+                    "LapTime_ms": timedelta_to_ms(lap_row.get("LapTime")),
+                    "Sector1Time_ms": timedelta_to_ms(lap_row.get("Sector1Time")),
+                    "Sector2Time_ms": timedelta_to_ms(lap_row.get("Sector2Time")),
+                    "Sector3Time_ms": timedelta_to_ms(lap_row.get("Sector3Time")),
+                    "Compound": to_native(lap_row.get("Compound")),
+                    "TyreLife": to_native(lap_row.get("TyreLife")),
+                    "Stint": to_native(lap_row.get("Stint")),
+                    "Position": to_native(lap_row.get("Position")),
+                    "IsPersonalBest": to_native(lap_row.get("IsPersonalBest")),
+                    "year": YEAR,
+                    "round": ROUND,
+                    "race_name": race_name,
+                }
+                producer.produce(
+                    topic=lap_topic.name,
+                    key=str(driver_id),
+                    value=lap_topic.serialize(key=str(driver_id), value=payload).value,
+                )
+                lap_count += 1
+
+            # --- Telemetry data ---
+            for _, lap_row in driver_laps.iterrows():
+                lap_num = to_native(lap_row.get("LapNumber"))
+                try:
+                    tel = lap_row.get_telemetry()
+                except Exception as exc:
+                    logger.warning(f"  Driver {driver_id} lap {lap_num}: telemetry error: {exc}")
+                    continue
+
+                if tel is None or len(tel) == 0:
+                    continue
+
+                lap_tel_count = 0
+                for _, row in tel.iterrows():
+                    session_time = row.get("SessionTime")
+                    session_time_ms = timedelta_to_ms(session_time)
+
+                    payload = {
+                        "driver_id": str(driver_id),
+                        "lap": int(lap_num) if lap_num is not None else None,
+                        "session_time_ms": session_time_ms,
+                        "Speed": to_native(row.get("Speed")),
+                        "RPM": to_native(row.get("RPM")),
+                        "nGear": to_native(row.get("nGear")),
+                        "Throttle": to_native(row.get("Throttle")),
+                        "Brake": to_native(row.get("Brake")),
+                        "DRS": to_native(row.get("DRS")),
+                        "X": to_native(row.get("X")),
+                        "Y": to_native(row.get("Y")),
+                        "Z": to_native(row.get("Z")),
+                        "year": YEAR,
+                        "round": ROUND,
+                        "race_name": race_name,
+                    }
+                    producer.produce(
+                        topic=telemetry_topic.name,
+                        key=str(driver_id),
+                        value=telemetry_topic.serialize(key=str(driver_id), value=payload).value,
+                    )
+                    telemetry_count += 1
+                    lap_tel_count += 1
+
+                logger.info(f"  Driver {driver_id} lap {lap_num}: {lap_tel_count} telemetry rows")
+
+    logger.info(
+        f"Done. Produced {lap_count} lap rows and {telemetry_count} telemetry rows "
+        f"for {race_name} ({YEAR} round {ROUND})."
+    )
 
 
 if __name__ == "__main__":
