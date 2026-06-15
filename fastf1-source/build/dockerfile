@@ -30,4 +30,4 @@ assert lap_count > 0, 'FastF1 session laps empty — livetiming unreachable at b
 print('Cache populated:', lap_count, 'laps loaded for', session.event[\"EventName\"]); \
 "
 
-ENTRYPOINT ["python3", "main.py"]
+ENTRYPOINT ["python3", "fastf1-source/main.py"]
