@@ -45,6 +45,41 @@ deployments:
         enabled: true
         hideHeader: true
         default: true
+  - name: OpenF1 Metadata Sink
+    application: openf1-metadata-sink
+    deploymentType: Service
+    version: latest
+    desiredStatus: Running
+    resources:
+      limits:
+        cpu: 200
+        memory: 300
+      replicas: 1
+    variables:
+      - name: input_sessions
+        inputType: InputTopic
+        value: openf1-sessions
+      - name: input_drivers
+        inputType: InputTopic
+        value: openf1-drivers
+      - name: input_stints
+        inputType: InputTopic
+        value: openf1-stints
+      - name: input_pit
+        inputType: InputTopic
+        value: openf1-pit
+      - name: input_race_control
+        inputType: InputTopic
+        value: openf1-race-control
+      - name: input_weather
+        inputType: InputTopic
+        value: openf1-weather
+      - name: input_team_radio
+        inputType: InputTopic
+        value: openf1-team-radio
+      - name: output_config
+        inputType: OutputTopic
+        value: config-ui
   - name: OpenF1 Importer
     application: openf1-importer
     deploymentType: Job

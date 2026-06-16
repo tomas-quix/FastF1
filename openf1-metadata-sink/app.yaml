@@ -1,0 +1,46 @@
+name: OpenF1 Metadata Sink
+language: python
+variables:
+  - name: input_sessions
+    inputType: InputTopic
+    description: OpenF1 session metadata
+    defaultValue: openf1-sessions
+    required: true
+  - name: input_drivers
+    inputType: InputTopic
+    description: OpenF1 driver list
+    defaultValue: openf1-drivers
+    required: true
+  - name: input_stints
+    inputType: InputTopic
+    description: OpenF1 stint data
+    defaultValue: openf1-stints
+    required: true
+  - name: input_pit
+    inputType: InputTopic
+    description: OpenF1 pit stop data
+    defaultValue: openf1-pit
+    required: true
+  - name: input_race_control
+    inputType: InputTopic
+    description: OpenF1 race control messages
+    defaultValue: openf1-race-control
+    required: true
+  - name: input_weather
+    inputType: InputTopic
+    description: OpenF1 weather data
+    defaultValue: openf1-weather
+    required: true
+  - name: input_team_radio
+    inputType: InputTopic
+    description: OpenF1 team radio messages
+    defaultValue: openf1-team-radio
+    required: true
+  - name: output_config
+    inputType: OutputTopic
+    description: Config-UI topic consumed by Dynamic Configuration Manager
+    defaultValue: config-ui
+    required: true
+dockerfile: build/dockerfile
+runEntryPoint: main.py
+defaultFile: main.py
