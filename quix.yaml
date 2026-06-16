@@ -540,7 +540,6 @@ deployments:
 
   - name: MongoDB
     image: mongo:6.0
-    version: latest
     deploymentType: Service
     resources:
       limits:
