@@ -38,6 +38,7 @@ deployments:
       mongoPasswordSecret: MONGO_ROOT_PASSWORD
       mongoDatabase: configurations
       mongoCollection: configurations
+      port: 27017
     plugin:
       embeddedView:
         enabled: true
