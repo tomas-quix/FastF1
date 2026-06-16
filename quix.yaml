@@ -1,0 +1,51 @@
+# Quix Project Descriptor
+# This file describes the data pipeline and configuration of resources of a Quix Project.
+
+metadata:
+  version: 2.0
+
+# This section describes the Deployments of the data pipeline
+deployments:
+  - name: MongoDB
+    group: Configuration Managment
+    application: mongodb
+    version: latest
+    deploymentType: Service
+    resources:
+      limits:
+        cpu: 200
+        memory: 800
+    network:
+      serviceName: mongodb
+      ports:
+        - port: 27017
+          targetPort: 27017
+  - name: Dynamic Configuration Manager
+    group: Configuration Managment
+    application: DynamicConfiguration
+    version: latest
+    deploymentType: Managed
+    resources:
+      limits:
+        cpu: 500
+        memory: 1000
+    publicAccess:
+      enabled: true
+      urlPrefix: config-api-svc
+    configuration:
+      topic: config-ui
+      mongoHost: mongodb
+      mongoPort: 27017
+      mongoUser: admin
+      mongoPasswordSecret: MONGO_ROOT_PASSWORD
+      mongoDatabase: configurations
+      mongoCollection: configurations
+    plugin:
+      embeddedView:
+        enabled: true
+        hideHeader: true
+        default: true
+
+# This section describes the Topics of the data pipeline
+topics:
+  - name: config-ui
