@@ -33,12 +33,11 @@ deployments:
     configuration:
       topic: config-ui
       mongoHost: mongodb
-      mongoPort: 80
+      mongoPort: 27017
       mongoUser: admin
       mongoPasswordSecret: MONGO_ROOT_PASSWORD
       mongoDatabase: configurations
       mongoCollection: configurations
-      port: 27017
     plugin:
       embeddedView:
         enabled: true
