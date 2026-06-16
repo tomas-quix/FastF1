@@ -8,7 +8,7 @@ load_dotenv()
 def make_config_entry(entity_type: str):
     """Return a transform function for the given entity type."""
 
-    def transform(value, ctx):
+    def transform(value):
         if entity_type == "sessions":
             config_key = f"openf1/sessions/{value.get('session_key', 'unknown')}"
         elif entity_type == "drivers":
