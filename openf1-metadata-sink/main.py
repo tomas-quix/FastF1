@@ -17,9 +17,9 @@ CONFIG_API_URL = os.environ.get(
 CONFIG_API_TOKEN = os.environ.get("Quix__Sdk__Token", "")
 
 _ENTITY_TYPES = {
-    "meetings": "openf1/meetings",
-    "sessions": "openf1/sessions",
-    "drivers": "openf1/drivers",
+    "meetings": "meetings",
+    "sessions": "sessions",
+    "drivers": "drivers",
 }
 
 
@@ -33,18 +33,18 @@ def make_session() -> requests.Session:
 def _build_key(entity_type: str, value: dict) -> str:
     if entity_type == "meetings":
         mk = str(value.get("meeting_key", "unknown"))
-        return f"openf1/meetings/{mk}"
+        return f"meetings/{mk}"
     elif entity_type == "sessions":
         mk = str(value.get("meeting_key", "unknown"))
         sk = str(value.get("session_key", "unknown"))
-        return f"openf1/sessions/{mk}-{sk}"
+        return f"sessions/{mk}-{sk}"
     elif entity_type == "drivers":
         mk = str(value.get("meeting_key", "unknown"))
         sk = str(value.get("session_key", "unknown"))
         dn = str(value.get("driver_number", "unknown"))
-        return f"openf1/drivers/{mk}-{sk}-{dn}"
+        return f"drivers/{mk}-{sk}-{dn}"
     else:
-        return f"openf1/{entity_type}/unknown"
+        return f"{entity_type}/unknown"
 
 
 def post_to_config_api(session: requests.Session, config_type: str, config_key: str, value: dict):
@@ -93,7 +93,7 @@ def main():
     drivers_topic  = app.topic(os.environ["input_drivers"],  value_deserializer="json")
 
     def make_sink(entity_type: str):
-        config_type = _ENTITY_TYPES.get(entity_type, f"openf1/{entity_type}")
+        config_type = _ENTITY_TYPES.get(entity_type, entity_type)
 
         def transform(value):
             config_key = _build_key(entity_type, value)

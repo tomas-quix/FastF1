@@ -77,17 +77,22 @@ def build_message_key(record: dict, session_key=None) -> str:
     return f"{mk}-{sk}"
 
 
+def matches_meeting(record: dict, name: str) -> bool:
+    """Return True if any string field in the record contains name (case-insensitive)."""
+    name_lower = name.lower()
+    return any(
+        name_lower in str(v).lower()
+        for v in record.values()
+        if isinstance(v, str)
+    )
+
+
 def fetch_meetings() -> list:
     """Fetch meetings for the configured year, optionally filtered by MEETING name."""
     logger.info(f"Fetching meetings for year={YEAR} ...")
     meetings = fetch_with_retry(f"{BASE_URL}/meetings", {"year": YEAR})
     if MEETING:
-        meeting_lower = MEETING.lower()
-        meetings = [
-            m for m in meetings
-            if meeting_lower in (m.get("meeting_name") or "").lower()
-            or meeting_lower in (m.get("meeting_official_name") or "").lower()
-        ]
+        meetings = [m for m in meetings if matches_meeting(m, MEETING)]
         logger.info(f"  Filtered to {len(meetings)} meeting(s) matching '{MEETING}'")
     else:
         logger.info(f"  Found {len(meetings)} meeting(s) (no filter applied)")
