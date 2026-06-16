@@ -49,6 +49,8 @@ def post_to_config_api(config_type: str, config_key: str, value: dict):
         logger.info("POSTed %s → %s", config_key, resp.status_code)
     except requests.RequestException as e:
         logger.error("Failed to POST %s: %s", config_key, e)
+    except Exception as e:
+        logger.error("Unexpected error posting %s: %s", config_key, e)
 
 
 def make_sink(entity_type: str):
@@ -100,7 +102,7 @@ def make_sink(entity_type: str):
 
 def main():
     app = Application(
-        consumer_group="openf1-metadata-sink",
+        consumer_group="openf1-metadata-sink-v2",
         auto_offset_reset="earliest",
     )
 
@@ -123,6 +125,13 @@ def main():
     app.dataframe(race_control_topic).apply(make_sink("race_control"))
     app.dataframe(weather_topic).apply(make_sink("weather"))
     app.dataframe(team_radio_topic).apply(make_sink("team_radio"))
+
+    logger.info("Starting OpenF1 Metadata Sink — will POST to %s", CONFIG_API_URL)
+    try:
+        probe = requests.get(f"{CONFIG_API_URL}/api/v1/configurations", timeout=5)
+        logger.info("Config API probe: %s %s", probe.status_code, probe.url)
+    except Exception as e:
+        logger.warning("Config API probe failed: %s", e)
 
     app.run()
 
