@@ -19,4 +19,20 @@ deployments:
       ports:
         - port: 27017
           targetPort: 27017
+  - name: Dynamic Configuration Manager
+    application: DynamicConfiguration
+    version: latest
+    deploymentType: Managed
+    resources:
+      limits:
+        cpu: 500
+        memory: 1000
+    configuration:
+      topic: config-ui
+      mongoHost: mongodb
+      mongoPort: 80
+      mongoUser: admin
+      mongoPasswordSecret: MONGO_ROOT_PASSWORD
+      mongoDatabase: configurations
+      mongoCollection: configurations
 
