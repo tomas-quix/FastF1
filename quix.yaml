@@ -83,33 +83,27 @@ deployments:
     variables:
       - name: input
         inputType: InputTopic
-        description: Input topic to consume from
-        required: true
         value: openf1-car-data
       - name: TABLE_NAME
         inputType: FreeText
-        description: Target table name in the data lake
-        required: true
         value: openf1_car_data
       - name: AUTO_OFFSET_RESET
         inputType: FreeText
-        description: Kafka consumer auto offset reset (earliest or latest)
         value: earliest
       - name: CONSUMER_GROUP
         inputType: FreeText
-        description: Kafka consumer group ID
-        value: sink-car-data
+        value: sink-car-data-v2
       - name: HIVE_COLUMNS
         inputType: FreeText
-        description: Comma-separated list of Hive partition columns
-        value: ''
+        value: driver_number
+      - name: TIMESTAMP_COLUMN
+        inputType: FreeText
+        value: date
       - name: BATCH_SIZE
         inputType: FreeText
-        description: Number of records per batch commit
-        value: 1000
+        value: 5000
       - name: COMMIT_INTERVAL
         inputType: FreeText
-        description: Commit interval in seconds
         value: 30
   - name: Sink - Laps
     application: QuixLake Timeseries Sink
@@ -134,7 +128,19 @@ deployments:
         value: earliest
       - name: CONSUMER_GROUP
         inputType: FreeText
-        value: sink-laps
+        value: sink-laps-v2
+      - name: HIVE_COLUMNS
+        inputType: FreeText
+        value: driver_number
+      - name: TIMESTAMP_COLUMN
+        inputType: FreeText
+        value: date_start
+      - name: BATCH_SIZE
+        inputType: FreeText
+        value: 500
+      - name: COMMIT_INTERVAL
+        inputType: FreeText
+        value: 30
   - name: Sink - Drivers
     application: QuixLake Timeseries Sink
     version: latest
@@ -158,7 +164,19 @@ deployments:
         value: earliest
       - name: CONSUMER_GROUP
         inputType: FreeText
-        value: sink-drivers
+        value: sink-drivers-v2
+      - name: HIVE_COLUMNS
+        inputType: FreeText
+        value: ''
+      - name: TIMESTAMP_COLUMN
+        inputType: FreeText
+        value: ''
+      - name: BATCH_SIZE
+        inputType: FreeText
+        value: 500
+      - name: COMMIT_INTERVAL
+        inputType: FreeText
+        value: 30
   - name: Sink - Intervals
     application: QuixLake Timeseries Sink
     version: latest
@@ -182,7 +200,19 @@ deployments:
         value: earliest
       - name: CONSUMER_GROUP
         inputType: FreeText
-        value: sink-intervals
+        value: sink-intervals-v2
+      - name: HIVE_COLUMNS
+        inputType: FreeText
+        value: driver_number
+      - name: TIMESTAMP_COLUMN
+        inputType: FreeText
+        value: date
+      - name: BATCH_SIZE
+        inputType: FreeText
+        value: 1000
+      - name: COMMIT_INTERVAL
+        inputType: FreeText
+        value: 30
   - name: Sink - Location
     application: QuixLake Timeseries Sink
     version: latest
@@ -206,7 +236,19 @@ deployments:
         value: earliest
       - name: CONSUMER_GROUP
         inputType: FreeText
-        value: sink-location
+        value: sink-location-v2
+      - name: HIVE_COLUMNS
+        inputType: FreeText
+        value: driver_number
+      - name: TIMESTAMP_COLUMN
+        inputType: FreeText
+        value: date
+      - name: BATCH_SIZE
+        inputType: FreeText
+        value: 5000
+      - name: COMMIT_INTERVAL
+        inputType: FreeText
+        value: 30
   - name: Sink - Meetings
     application: QuixLake Timeseries Sink
     version: latest
@@ -230,7 +272,19 @@ deployments:
         value: earliest
       - name: CONSUMER_GROUP
         inputType: FreeText
-        value: sink-meetings
+        value: sink-meetings-v2
+      - name: HIVE_COLUMNS
+        inputType: FreeText
+        value: ''
+      - name: TIMESTAMP_COLUMN
+        inputType: FreeText
+        value: ''
+      - name: BATCH_SIZE
+        inputType: FreeText
+        value: 500
+      - name: COMMIT_INTERVAL
+        inputType: FreeText
+        value: 30
   - name: Sink - Pit
     application: QuixLake Timeseries Sink
     version: latest
@@ -254,7 +308,19 @@ deployments:
         value: earliest
       - name: CONSUMER_GROUP
         inputType: FreeText
-        value: sink-pit
+        value: sink-pit-v2
+      - name: HIVE_COLUMNS
+        inputType: FreeText
+        value: driver_number
+      - name: TIMESTAMP_COLUMN
+        inputType: FreeText
+        value: date
+      - name: BATCH_SIZE
+        inputType: FreeText
+        value: 500
+      - name: COMMIT_INTERVAL
+        inputType: FreeText
+        value: 30
   - name: Sink - Position
     application: QuixLake Timeseries Sink
     version: latest
@@ -278,7 +344,19 @@ deployments:
         value: earliest
       - name: CONSUMER_GROUP
         inputType: FreeText
-        value: sink-position
+        value: sink-position-v2
+      - name: HIVE_COLUMNS
+        inputType: FreeText
+        value: driver_number
+      - name: TIMESTAMP_COLUMN
+        inputType: FreeText
+        value: date
+      - name: BATCH_SIZE
+        inputType: FreeText
+        value: 1000
+      - name: COMMIT_INTERVAL
+        inputType: FreeText
+        value: 30
   - name: Sink - Race Control
     application: QuixLake Timeseries Sink
     version: latest
@@ -302,7 +380,19 @@ deployments:
         value: earliest
       - name: CONSUMER_GROUP
         inputType: FreeText
-        value: sink-race-control
+        value: sink-race-control-v2
+      - name: HIVE_COLUMNS
+        inputType: FreeText
+        value: ''
+      - name: TIMESTAMP_COLUMN
+        inputType: FreeText
+        value: date
+      - name: BATCH_SIZE
+        inputType: FreeText
+        value: 500
+      - name: COMMIT_INTERVAL
+        inputType: FreeText
+        value: 30
   - name: Sink - Sessions
     application: QuixLake Timeseries Sink
     version: latest
@@ -326,7 +416,19 @@ deployments:
         value: earliest
       - name: CONSUMER_GROUP
         inputType: FreeText
-        value: sink-sessions
+        value: sink-sessions-v2
+      - name: HIVE_COLUMNS
+        inputType: FreeText
+        value: ''
+      - name: TIMESTAMP_COLUMN
+        inputType: FreeText
+        value: ''
+      - name: BATCH_SIZE
+        inputType: FreeText
+        value: 500
+      - name: COMMIT_INTERVAL
+        inputType: FreeText
+        value: 30
   - name: Sink - Stints
     application: QuixLake Timeseries Sink
     version: latest
@@ -350,7 +452,19 @@ deployments:
         value: earliest
       - name: CONSUMER_GROUP
         inputType: FreeText
-        value: sink-stints
+        value: sink-stints-v2
+      - name: HIVE_COLUMNS
+        inputType: FreeText
+        value: driver_number
+      - name: TIMESTAMP_COLUMN
+        inputType: FreeText
+        value: ''
+      - name: BATCH_SIZE
+        inputType: FreeText
+        value: 500
+      - name: COMMIT_INTERVAL
+        inputType: FreeText
+        value: 30
   - name: Sink - Team Radio
     application: QuixLake Timeseries Sink
     version: latest
@@ -374,7 +488,19 @@ deployments:
         value: earliest
       - name: CONSUMER_GROUP
         inputType: FreeText
-        value: sink-team-radio
+        value: sink-team-radio-v2
+      - name: HIVE_COLUMNS
+        inputType: FreeText
+        value: driver_number
+      - name: TIMESTAMP_COLUMN
+        inputType: FreeText
+        value: date
+      - name: BATCH_SIZE
+        inputType: FreeText
+        value: 500
+      - name: COMMIT_INTERVAL
+        inputType: FreeText
+        value: 30
   - name: Sink - Weather
     application: QuixLake Timeseries Sink
     version: latest
@@ -398,7 +524,19 @@ deployments:
         value: earliest
       - name: CONSUMER_GROUP
         inputType: FreeText
-        value: sink-weather
+        value: sink-weather-v2
+      - name: HIVE_COLUMNS
+        inputType: FreeText
+        value: ''
+      - name: TIMESTAMP_COLUMN
+        inputType: FreeText
+        value: date
+      - name: BATCH_SIZE
+        inputType: FreeText
+        value: 500
+      - name: COMMIT_INTERVAL
+        inputType: FreeText
+        value: 30
 
 # This section describes the Topics of the data pipeline
 topics:
