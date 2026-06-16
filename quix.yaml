@@ -27,6 +27,9 @@ deployments:
       limits:
         cpu: 500
         memory: 1000
+    publicAccess:
+      enabled: true
+      urlPrefix: config-api-svc
     configuration:
       topic: config-ui
       mongoHost: mongodb
@@ -35,6 +38,11 @@ deployments:
       mongoPasswordSecret: MONGO_ROOT_PASSWORD
       mongoDatabase: configurations
       mongoCollection: configurations
+    plugin:
+      embeddedView:
+        enabled: true
+        hideHeader: true
+        default: true
 
 # This section describes the Topics of the data pipeline
 topics:
