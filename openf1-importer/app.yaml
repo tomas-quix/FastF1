@@ -1,6 +1,11 @@
 name: OpenF1 Importer
 language: python
 variables:
+  - name: output_meetings
+    inputType: OutputTopic
+    description: Topic for meeting metadata
+    defaultValue: openf1-meetings
+    required: true
   - name: output_sessions
     inputType: OutputTopic
     description: Topic for session metadata
@@ -63,9 +68,9 @@ variables:
     required: true
   - name: OPENF1_MEETING
     inputType: FreeText
-    description: Meeting/circuit name to match (e.g. Monza, Silverstone)
-    defaultValue: Monza
-    required: true
+    description: Meeting/circuit name to match (e.g. Monza, Silverstone). Leave blank for all meetings.
+    defaultValue: ""
+    required: false
   - name: OPENF1_SESSION_NAME
     inputType: FreeText
     description: Session name within the meeting (e.g. Race, Qualifying, Sprint)

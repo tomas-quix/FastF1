@@ -17,13 +17,9 @@ CONFIG_API_URL = os.environ.get(
 CONFIG_API_TOKEN = os.environ.get("Quix__Sdk__Token", "")
 
 _ENTITY_TYPES = {
+    "meetings": "openf1/meetings",
     "sessions": "openf1/sessions",
     "drivers": "openf1/drivers",
-    "stints": "openf1/stints",
-    "pit": "openf1/pit",
-    "race_control": "openf1/race-control",
-    "weather": "openf1/weather",
-    "team_radio": "openf1/team-radio",
 }
 
 
@@ -35,36 +31,18 @@ def make_session() -> requests.Session:
 
 
 def _build_key(entity_type: str, value: dict) -> str:
-    if entity_type == "sessions":
-        return f"openf1/sessions/{value.get('session_key', 'unknown')}"
+    if entity_type == "meetings":
+        mk = str(value.get("meeting_key", "unknown"))
+        return f"openf1/meetings/{mk}"
+    elif entity_type == "sessions":
+        mk = str(value.get("meeting_key", "unknown"))
+        sk = str(value.get("session_key", "unknown"))
+        return f"openf1/sessions/{mk}-{sk}"
     elif entity_type == "drivers":
-        return f"openf1/drivers/{value.get('driver_number', 'unknown')}"
-    elif entity_type == "stints":
-        return (
-            f"openf1/stints/"
-            f"{value.get('driver_number', 'unknown')}/"
-            f"{value.get('stint_number', 0)}"
-        )
-    elif entity_type == "pit":
-        return (
-            f"openf1/pit/"
-            f"{value.get('driver_number', 'unknown')}/"
-            f"{value.get('lap_number', value.get('pit_duration', 'unknown'))}"
-        )
-    elif entity_type == "race_control":
-        return (
-            f"openf1/race-control/"
-            f"{value.get('lap_number', 'unknown')}/"
-            f"{value.get('category', 'unknown')}"
-        )
-    elif entity_type == "weather":
-        return f"openf1/weather/{value.get('date', value.get('meeting_key', 'unknown'))}"
-    elif entity_type == "team_radio":
-        return (
-            f"openf1/team-radio/"
-            f"{value.get('driver_number', 'unknown')}/"
-            f"{value.get('date', 'unknown')}"
-        )
+        mk = str(value.get("meeting_key", "unknown"))
+        sk = str(value.get("session_key", "unknown"))
+        dn = str(value.get("driver_number", "unknown"))
+        return f"openf1/drivers/{mk}-{sk}-{dn}"
     else:
         return f"openf1/{entity_type}/unknown"
 
@@ -106,17 +84,13 @@ def main():
         logger.warning("Config API probe failed: %s", e)
 
     app = Application(
-        consumer_group="openf1-metadata-sink-v3",
+        consumer_group="openf1-metadata-sink-v4",
         auto_offset_reset="earliest",
     )
 
-    sessions_topic     = app.topic(os.environ["input_sessions"],     value_deserializer="json")
-    drivers_topic      = app.topic(os.environ["input_drivers"],      value_deserializer="json")
-    stints_topic       = app.topic(os.environ["input_stints"],       value_deserializer="json")
-    pit_topic          = app.topic(os.environ["input_pit"],          value_deserializer="json")
-    race_control_topic = app.topic(os.environ["input_race_control"], value_deserializer="json")
-    weather_topic      = app.topic(os.environ["input_weather"],      value_deserializer="json")
-    team_radio_topic   = app.topic(os.environ["input_team_radio"],   value_deserializer="json")
+    meetings_topic = app.topic(os.environ["input_meetings"], value_deserializer="json")
+    sessions_topic = app.topic(os.environ["input_sessions"], value_deserializer="json")
+    drivers_topic  = app.topic(os.environ["input_drivers"],  value_deserializer="json")
 
     def make_sink(entity_type: str):
         config_type = _ENTITY_TYPES.get(entity_type, f"openf1/{entity_type}")
@@ -128,13 +102,9 @@ def main():
 
         return transform
 
+    app.dataframe(meetings_topic).apply(make_sink("meetings"))
     app.dataframe(sessions_topic).apply(make_sink("sessions"))
     app.dataframe(drivers_topic).apply(make_sink("drivers"))
-    app.dataframe(stints_topic).apply(make_sink("stints"))
-    app.dataframe(pit_topic).apply(make_sink("pit"))
-    app.dataframe(race_control_topic).apply(make_sink("race_control"))
-    app.dataframe(weather_topic).apply(make_sink("weather"))
-    app.dataframe(team_radio_topic).apply(make_sink("team_radio"))
 
     logger.info("Starting OpenF1 Metadata Sink — POSTing to %s", CONFIG_API_URL)
     app.run()

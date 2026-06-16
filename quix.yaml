@@ -56,27 +56,15 @@ deployments:
         memory: 300
       replicas: 1
     variables:
+      - name: input_meetings
+        inputType: InputTopic
+        value: openf1-meetings
       - name: input_sessions
         inputType: InputTopic
         value: openf1-sessions
       - name: input_drivers
         inputType: InputTopic
         value: openf1-drivers
-      - name: input_stints
-        inputType: InputTopic
-        value: openf1-stints
-      - name: input_pit
-        inputType: InputTopic
-        value: openf1-pit
-      - name: input_race_control
-        inputType: InputTopic
-        value: openf1-race-control
-      - name: input_weather
-        inputType: InputTopic
-        value: openf1-weather
-      - name: input_team_radio
-        inputType: InputTopic
-        value: openf1-team-radio
       - name: CONFIG_API_URL
         inputType: FreeText
         value: https://config-api-svc-quixdev-fastf1-dev.deployments-dev.quix.io
@@ -90,6 +78,9 @@ deployments:
       memory: 1000
       replicas: 1
     variables:
+      - name: output_meetings
+        inputType: OutputTopic
+        value: openf1-meetings
       - name: output_sessions
         inputType: OutputTopic
         value: openf1-sessions
@@ -145,6 +136,10 @@ deployments:
 # This section describes the Topics of the data pipeline
 topics:
   - name: config-ui
+  - name: openf1-meetings
+    configuration:
+      partitions: 1
+      retentionInMinutes: -1
   - name: openf1-sessions
     configuration:
       partitions: 1
