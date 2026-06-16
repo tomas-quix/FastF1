@@ -121,7 +121,7 @@ def main():
             for record in records:
                 msg_key = str(record.get(key_field, session_key))
                 msg = topic.serialize(key=msg_key, value=record)
-                producer.produce(topic=topic, key=msg.key, value=msg.value)
+                producer.produce(topic=topic.name, key=msg.key, value=msg.value)
                 n += 1
         counts[endpoint] = n
         logger.info(f"  → {n} records published to {get_topic_name(endpoint)}")
@@ -157,7 +157,7 @@ def main():
                 )
                 for record in records:
                     msg = car_topic.serialize(key=dn, value=record)
-                    producer.produce(topic=car_topic, key=msg.key, value=msg.value)
+                    producer.produce(topic=car_topic.name, key=msg.key, value=msg.value)
                     car_count += 1
                 logger.info(f"    → {len(records)} records for driver {dn}")
                 time.sleep(0.2)  # polite pacing between per-driver requests
