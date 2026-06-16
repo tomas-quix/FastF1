@@ -1,0 +1,26 @@
+name: Metadata Loader
+language: python
+variables:
+  - name: input_drivers
+    inputType: InputTopic
+    description: OpenF1 drivers topic
+    defaultValue: openf1-drivers
+    required: true
+  - name: input_meetings
+    inputType: InputTopic
+    description: OpenF1 meetings topic
+    defaultValue: openf1-meetings
+    required: true
+  - name: input_sessions
+    inputType: InputTopic
+    description: OpenF1 sessions topic
+    defaultValue: openf1-sessions
+    required: true
+  - name: CONFIG_SERVICE_URL
+    inputType: FreeText
+    description: URL of the Dynamic Configuration Manager REST API
+    defaultValue: http://config-manager:80
+    required: true
+dockerfile: build/dockerfile
+runEntryPoint: main.py
+defaultFile: main.py

@@ -1,0 +1,106 @@
+name: Config Enricher
+language: python
+variables:
+  - name: input_car_data
+    inputType: InputTopic
+    description: Raw car data topic
+    defaultValue: openf1-car-data
+    required: true
+  - name: input_laps
+    inputType: InputTopic
+    description: Raw laps topic
+    defaultValue: openf1-laps
+    required: true
+  - name: input_intervals
+    inputType: InputTopic
+    description: Raw intervals topic
+    defaultValue: openf1-intervals
+    required: true
+  - name: input_location
+    inputType: InputTopic
+    description: Raw location topic
+    defaultValue: openf1-location
+    required: true
+  - name: input_pit
+    inputType: InputTopic
+    description: Raw pit topic
+    defaultValue: openf1-pit
+    required: true
+  - name: input_position
+    inputType: InputTopic
+    description: Raw position topic
+    defaultValue: openf1-position
+    required: true
+  - name: input_stints
+    inputType: InputTopic
+    description: Raw stints topic
+    defaultValue: openf1-stints
+    required: true
+  - name: input_team_radio
+    inputType: InputTopic
+    description: Raw team radio topic
+    defaultValue: openf1-team-radio
+    required: true
+  - name: CONFIG_TOPIC
+    inputType: InputTopic
+    description: Configuration updates topic from Dynamic Configuration Manager
+    defaultValue: pipeline-config
+    required: true
+  - name: output_car_data
+    inputType: OutputTopic
+    description: Enriched car data topic
+    defaultValue: enriched-car-data
+    required: true
+  - name: output_laps
+    inputType: OutputTopic
+    description: Enriched laps topic
+    defaultValue: enriched-laps
+    required: true
+  - name: output_intervals
+    inputType: OutputTopic
+    description: Enriched intervals topic
+    defaultValue: enriched-intervals
+    required: true
+  - name: output_location
+    inputType: OutputTopic
+    description: Enriched location topic
+    defaultValue: enriched-location
+    required: true
+  - name: output_pit
+    inputType: OutputTopic
+    description: Enriched pit topic
+    defaultValue: enriched-pit
+    required: true
+  - name: output_position
+    inputType: OutputTopic
+    description: Enriched position topic
+    defaultValue: enriched-position
+    required: true
+  - name: output_stints
+    inputType: OutputTopic
+    description: Enriched stints topic
+    defaultValue: enriched-stints
+    required: true
+  - name: output_team_radio
+    inputType: OutputTopic
+    description: Enriched team radio topic
+    defaultValue: enriched-team-radio
+    required: true
+  - name: CONSUMER_GROUP_NAME
+    inputType: FreeText
+    description: Kafka consumer group
+    defaultValue: config-enricher-v1
+    required: true
+  - name: SESSION_KEY
+    inputType: FreeText
+    description: The session_key to look up in config (e.g. 9161)
+    defaultValue: ""
+    required: false
+  - name: MEETING_KEY
+    inputType: FreeText
+    description: The meeting_key to look up in config (e.g. 1229)
+    defaultValue: ""
+    required: false
+dockerfile: build/dockerfile
+runEntryPoint: main.py
+defaultFile: main.py

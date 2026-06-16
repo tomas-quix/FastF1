@@ -83,16 +83,16 @@ deployments:
     variables:
       - name: input
         inputType: InputTopic
-        value: openf1-car-data
+        value: enriched-car-data
       - name: TABLE_NAME
         inputType: FreeText
-        value: openf1_car_data
+        value: enriched_car_data
       - name: AUTO_OFFSET_RESET
         inputType: FreeText
         value: earliest
       - name: CONSUMER_GROUP
         inputType: FreeText
-        value: sink-car-data-v2
+        value: sink-car-data-v3
       - name: HIVE_COLUMNS
         inputType: FreeText
         value: driver_number
@@ -119,16 +119,16 @@ deployments:
     variables:
       - name: input
         inputType: InputTopic
-        value: openf1-laps
+        value: enriched-laps
       - name: TABLE_NAME
         inputType: FreeText
-        value: openf1_laps
+        value: enriched_laps
       - name: AUTO_OFFSET_RESET
         inputType: FreeText
         value: earliest
       - name: CONSUMER_GROUP
         inputType: FreeText
-        value: sink-laps-v2
+        value: sink-laps-v3
       - name: HIVE_COLUMNS
         inputType: FreeText
         value: driver_number
@@ -191,16 +191,16 @@ deployments:
     variables:
       - name: input
         inputType: InputTopic
-        value: openf1-intervals
+        value: enriched-intervals
       - name: TABLE_NAME
         inputType: FreeText
-        value: openf1_intervals
+        value: enriched_intervals
       - name: AUTO_OFFSET_RESET
         inputType: FreeText
         value: earliest
       - name: CONSUMER_GROUP
         inputType: FreeText
-        value: sink-intervals-v2
+        value: sink-intervals-v3
       - name: HIVE_COLUMNS
         inputType: FreeText
         value: driver_number
@@ -227,16 +227,16 @@ deployments:
     variables:
       - name: input
         inputType: InputTopic
-        value: openf1-location
+        value: enriched-location
       - name: TABLE_NAME
         inputType: FreeText
-        value: openf1_location
+        value: enriched_location
       - name: AUTO_OFFSET_RESET
         inputType: FreeText
         value: earliest
       - name: CONSUMER_GROUP
         inputType: FreeText
-        value: sink-location-v2
+        value: sink-location-v3
       - name: HIVE_COLUMNS
         inputType: FreeText
         value: driver_number
@@ -299,16 +299,16 @@ deployments:
     variables:
       - name: input
         inputType: InputTopic
-        value: openf1-pit
+        value: enriched-pit
       - name: TABLE_NAME
         inputType: FreeText
-        value: openf1_pit
+        value: enriched_pit
       - name: AUTO_OFFSET_RESET
         inputType: FreeText
         value: earliest
       - name: CONSUMER_GROUP
         inputType: FreeText
-        value: sink-pit-v2
+        value: sink-pit-v3
       - name: HIVE_COLUMNS
         inputType: FreeText
         value: driver_number
@@ -335,16 +335,16 @@ deployments:
     variables:
       - name: input
         inputType: InputTopic
-        value: openf1-position
+        value: enriched-position
       - name: TABLE_NAME
         inputType: FreeText
-        value: openf1_position
+        value: enriched_position
       - name: AUTO_OFFSET_RESET
         inputType: FreeText
         value: earliest
       - name: CONSUMER_GROUP
         inputType: FreeText
-        value: sink-position-v2
+        value: sink-position-v3
       - name: HIVE_COLUMNS
         inputType: FreeText
         value: driver_number
@@ -443,16 +443,16 @@ deployments:
     variables:
       - name: input
         inputType: InputTopic
-        value: openf1-stints
+        value: enriched-stints
       - name: TABLE_NAME
         inputType: FreeText
-        value: openf1_stints
+        value: enriched_stints
       - name: AUTO_OFFSET_RESET
         inputType: FreeText
         value: earliest
       - name: CONSUMER_GROUP
         inputType: FreeText
-        value: sink-stints-v2
+        value: sink-stints-v3
       - name: HIVE_COLUMNS
         inputType: FreeText
         value: driver_number
@@ -479,16 +479,16 @@ deployments:
     variables:
       - name: input
         inputType: InputTopic
-        value: openf1-team-radio
+        value: enriched-team-radio
       - name: TABLE_NAME
         inputType: FreeText
-        value: openf1_team_radio
+        value: enriched_team_radio
       - name: AUTO_OFFSET_RESET
         inputType: FreeText
         value: earliest
       - name: CONSUMER_GROUP
         inputType: FreeText
-        value: sink-team-radio-v2
+        value: sink-team-radio-v3
       - name: HIVE_COLUMNS
         inputType: FreeText
         value: driver_number
@@ -537,6 +537,170 @@ deployments:
       - name: COMMIT_INTERVAL
         inputType: FreeText
         value: 30
+
+  - name: MongoDB
+    application: MongoDB
+    version: latest
+    deploymentType: Service
+    libraryItemId: mongodb
+    resources:
+      limits:
+        cpu: 200
+        memory: 800
+    desiredStatus: Running
+    state:
+      enabled: true
+      size: 5
+    network:
+      serviceName: mongodb
+      ports:
+        - port: 27017
+          targetPort: 27017
+    variables:
+      - name: MONGO_INITDB_ROOT_USERNAME
+        inputType: FreeText
+        value: admin
+      - name: MONGO_INITDB_ROOT_PASSWORD
+        inputType: ProjectVariable
+        value: MONGO_ROOT_PASSWORD
+  - name: Dynamic Configuration Manager
+    application: Dynamic Configuration Manager
+    version: latest
+    deploymentType: Managed
+    libraryItemId: dynamic-configuration
+    resources:
+      limits:
+        cpu: 500
+        memory: 1000
+    desiredStatus: Running
+    network:
+      serviceName: config-manager
+      ports:
+        - port: 80
+          targetPort: 80
+    variables:
+      - name: topic
+        inputType: OutputTopic
+        value: pipeline-config
+      - name: consumerGroup
+        inputType: FreeText
+        value: config-api-v1
+      - name: mongoHost
+        inputType: FreeText
+        value: mongodb
+      - name: mongoPort
+        inputType: FreeText
+        value: "27017"
+      - name: mongoUser
+        inputType: FreeText
+        value: admin
+      - name: mongoPasswordSecret
+        inputType: ProjectVariable
+        value: MONGO_ROOT_PASSWORD
+      - name: mongoDatabase
+        inputType: FreeText
+        value: openf1_config
+      - name: mongoCollection
+        inputType: FreeText
+        value: metadata
+      - name: contentStore
+        inputType: FreeText
+        value: mongo
+      - name: port
+        inputType: FreeText
+        value: "80"
+  - name: Metadata Loader
+    application: metadata-loader
+    version: latest
+    deploymentType: Service
+    resources:
+      limits:
+        cpu: 200
+        memory: 300
+    desiredStatus: Running
+    variables:
+      - name: input_drivers
+        inputType: InputTopic
+        value: openf1-drivers
+      - name: input_meetings
+        inputType: InputTopic
+        value: openf1-meetings
+      - name: input_sessions
+        inputType: InputTopic
+        value: openf1-sessions
+      - name: CONFIG_SERVICE_URL
+        inputType: FreeText
+        value: http://config-manager:80
+  - name: Config Enricher
+    application: config-enricher
+    version: latest
+    deploymentType: Service
+    resources:
+      limits:
+        cpu: 300
+        memory: 500
+    desiredStatus: Running
+    variables:
+      - name: input_car_data
+        inputType: InputTopic
+        value: openf1-car-data
+      - name: input_laps
+        inputType: InputTopic
+        value: openf1-laps
+      - name: input_intervals
+        inputType: InputTopic
+        value: openf1-intervals
+      - name: input_location
+        inputType: InputTopic
+        value: openf1-location
+      - name: input_pit
+        inputType: InputTopic
+        value: openf1-pit
+      - name: input_position
+        inputType: InputTopic
+        value: openf1-position
+      - name: input_stints
+        inputType: InputTopic
+        value: openf1-stints
+      - name: input_team_radio
+        inputType: InputTopic
+        value: openf1-team-radio
+      - name: CONFIG_TOPIC
+        inputType: InputTopic
+        value: pipeline-config
+      - name: output_car_data
+        inputType: OutputTopic
+        value: enriched-car-data
+      - name: output_laps
+        inputType: OutputTopic
+        value: enriched-laps
+      - name: output_intervals
+        inputType: OutputTopic
+        value: enriched-intervals
+      - name: output_location
+        inputType: OutputTopic
+        value: enriched-location
+      - name: output_pit
+        inputType: OutputTopic
+        value: enriched-pit
+      - name: output_position
+        inputType: OutputTopic
+        value: enriched-position
+      - name: output_stints
+        inputType: OutputTopic
+        value: enriched-stints
+      - name: output_team_radio
+        inputType: OutputTopic
+        value: enriched-team-radio
+      - name: CONSUMER_GROUP_NAME
+        inputType: FreeText
+        value: config-enricher-v1
+      - name: SESSION_KEY
+        inputType: FreeText
+        value: "9161"
+      - name: MEETING_KEY
+        inputType: FreeText
+        value: "1229"
 
 # This section describes the Topics of the data pipeline
 topics:
@@ -601,6 +765,51 @@ topics:
       replicationFactor: 2
       retentionInMinutes: 10080
   - name: openf1-weather
+    configuration:
+      partitions: 2
+      replicationFactor: 2
+      retentionInMinutes: 10080
+  - name: pipeline-config
+    configuration:
+      partitions: 1
+      replicationFactor: 2
+      retentionInMinutes: -1
+  - name: enriched-car-data
+    configuration:
+      partitions: 2
+      replicationFactor: 2
+      retentionInMinutes: 10080
+  - name: enriched-laps
+    configuration:
+      partitions: 2
+      replicationFactor: 2
+      retentionInMinutes: 10080
+  - name: enriched-intervals
+    configuration:
+      partitions: 2
+      replicationFactor: 2
+      retentionInMinutes: 10080
+  - name: enriched-location
+    configuration:
+      partitions: 2
+      replicationFactor: 2
+      retentionInMinutes: 10080
+  - name: enriched-pit
+    configuration:
+      partitions: 2
+      replicationFactor: 2
+      retentionInMinutes: 10080
+  - name: enriched-position
+    configuration:
+      partitions: 2
+      replicationFactor: 2
+      retentionInMinutes: 10080
+  - name: enriched-stints
+    configuration:
+      partitions: 2
+      replicationFactor: 2
+      retentionInMinutes: 10080
+  - name: enriched-team-radio
     configuration:
       partitions: 2
       replicationFactor: 2
