@@ -1,0 +1,91 @@
+name: OpenF1 Importer
+language: python
+variables:
+  - name: output_sessions
+    inputType: OutputTopic
+    description: Topic for session metadata
+    defaultValue: openf1-sessions
+    required: true
+  - name: output_drivers
+    inputType: OutputTopic
+    description: Topic for driver list
+    defaultValue: openf1-drivers
+    required: true
+  - name: output_laps
+    inputType: OutputTopic
+    description: Topic for lap data
+    defaultValue: openf1-laps
+    required: true
+  - name: output_stints
+    inputType: OutputTopic
+    description: Topic for stint data
+    defaultValue: openf1-stints
+    required: true
+  - name: output_pit
+    inputType: OutputTopic
+    description: Topic for pit stop data
+    defaultValue: openf1-pit
+    required: true
+  - name: output_position
+    inputType: OutputTopic
+    description: Topic for car position data
+    defaultValue: openf1-position
+    required: true
+  - name: output_intervals
+    inputType: OutputTopic
+    description: Topic for gap/interval data
+    defaultValue: openf1-intervals
+    required: true
+  - name: output_weather
+    inputType: OutputTopic
+    description: Topic for weather data
+    defaultValue: openf1-weather
+    required: true
+  - name: output_race_control
+    inputType: OutputTopic
+    description: Topic for race control messages
+    defaultValue: openf1-race-control
+    required: true
+  - name: output_team_radio
+    inputType: OutputTopic
+    description: Topic for team radio messages
+    defaultValue: openf1-team-radio
+    required: true
+  - name: output_car_data
+    inputType: OutputTopic
+    description: Topic for high-frequency car telemetry
+    defaultValue: openf1-car-data
+    required: true
+  - name: OPENF1_YEAR
+    inputType: FreeText
+    description: Season year to import (2023+)
+    defaultValue: "2023"
+    required: true
+  - name: OPENF1_MEETING
+    inputType: FreeText
+    description: Meeting/circuit name to match (e.g. Monza, Silverstone)
+    defaultValue: Monza
+    required: true
+  - name: OPENF1_SESSION_NAME
+    inputType: FreeText
+    description: Session name within the meeting (e.g. Race, Qualifying, Sprint)
+    defaultValue: Race
+    required: true
+  - name: OPENF1_SESSION_KEY
+    inputType: FreeText
+    description: Direct session_key override — if set, skips year/meeting resolution
+    defaultValue: ""
+    required: false
+  - name: OPENF1_BASE_URL
+    inputType: FreeText
+    description: OpenF1 API base URL
+    defaultValue: https://api.openf1.org/v1
+    required: true
+  - name: INCLUDE_CAR_DATA
+    inputType: FreeText
+    description: Set to true to include high-frequency car telemetry (large payload)
+    defaultValue: "true"
+    required: false
+dockerfile: build/dockerfile
+runEntryPoint: main.py
+defaultFile: main.py

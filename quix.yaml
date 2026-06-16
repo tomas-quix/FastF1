@@ -45,7 +45,112 @@ deployments:
         enabled: true
         hideHeader: true
         default: true
+  - name: OpenF1 Importer
+    application: openf1-importer
+    deploymentType: Job
+    version: latest
+    desiredStatus: Stopped
+    resources:
+      cpu: 500
+      memory: 1000
+      replicas: 1
+    variables:
+      - name: output_sessions
+        inputType: OutputTopic
+        value: openf1-sessions
+      - name: output_drivers
+        inputType: OutputTopic
+        value: openf1-drivers
+      - name: output_laps
+        inputType: OutputTopic
+        value: openf1-laps
+      - name: output_stints
+        inputType: OutputTopic
+        value: openf1-stints
+      - name: output_pit
+        inputType: OutputTopic
+        value: openf1-pit
+      - name: output_position
+        inputType: OutputTopic
+        value: openf1-position
+      - name: output_intervals
+        inputType: OutputTopic
+        value: openf1-intervals
+      - name: output_weather
+        inputType: OutputTopic
+        value: openf1-weather
+      - name: output_race_control
+        inputType: OutputTopic
+        value: openf1-race-control
+      - name: output_team_radio
+        inputType: OutputTopic
+        value: openf1-team-radio
+      - name: output_car_data
+        inputType: OutputTopic
+        value: openf1-car-data
+      - name: OPENF1_YEAR
+        inputType: FreeText
+        value: "2023"
+      - name: OPENF1_MEETING
+        inputType: FreeText
+        value: Monza
+      - name: OPENF1_SESSION_NAME
+        inputType: FreeText
+        value: Race
+      - name: OPENF1_SESSION_KEY
+        inputType: FreeText
+        value: ""
+      - name: OPENF1_BASE_URL
+        inputType: FreeText
+        value: https://api.openf1.org/v1
+      - name: INCLUDE_CAR_DATA
+        inputType: FreeText
+        value: "true"
 
 # This section describes the Topics of the data pipeline
 topics:
   - name: config-ui
+  - name: openf1-sessions
+    configuration:
+      partitions: 1
+      retentionInMinutes: -1
+  - name: openf1-drivers
+    configuration:
+      partitions: 1
+      retentionInMinutes: -1
+  - name: openf1-laps
+    configuration:
+      partitions: 1
+      retentionInMinutes: -1
+  - name: openf1-stints
+    configuration:
+      partitions: 1
+      retentionInMinutes: -1
+  - name: openf1-pit
+    configuration:
+      partitions: 1
+      retentionInMinutes: -1
+  - name: openf1-position
+    configuration:
+      partitions: 1
+      retentionInMinutes: -1
+  - name: openf1-intervals
+    configuration:
+      partitions: 1
+      retentionInMinutes: -1
+  - name: openf1-weather
+    configuration:
+      partitions: 1
+      retentionInMinutes: -1
+  - name: openf1-race-control
+    configuration:
+      partitions: 1
+      retentionInMinutes: -1
+  - name: openf1-team-radio
+    configuration:
+      partitions: 1
+      retentionInMinutes: -1
+  - name: openf1-car-data
+    configuration:
+      partitions: 4
+      retentionInMinutes: -1
