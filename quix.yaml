@@ -539,10 +539,9 @@ deployments:
         value: 30
 
   - name: MongoDB
-    application: MongoDB
+    libraryItemId: mongodb
     version: latest
     deploymentType: Service
-    libraryItemId: mongodb
     resources:
       limits:
         cpu: 200
@@ -564,10 +563,9 @@ deployments:
         inputType: ProjectVariable
         value: MONGO_ROOT_PASSWORD
   - name: Dynamic Configuration Manager
-    application: Dynamic Configuration Manager
+    application: DynamicConfiguration
     version: latest
     deploymentType: Managed
-    libraryItemId: dynamic-configuration
     resources:
       limits:
         cpu: 500
@@ -578,37 +576,17 @@ deployments:
       ports:
         - port: 80
           targetPort: 80
-    variables:
-      - name: topic
-        inputType: OutputTopic
-        value: pipeline-config
-      - name: consumerGroup
-        inputType: FreeText
-        value: config-api-v1
-      - name: mongoHost
-        inputType: FreeText
-        value: mongodb
-      - name: mongoPort
-        inputType: FreeText
-        value: "27017"
-      - name: mongoUser
-        inputType: FreeText
-        value: admin
-      - name: mongoPasswordSecret
-        inputType: ProjectVariable
-        value: MONGO_ROOT_PASSWORD
-      - name: mongoDatabase
-        inputType: FreeText
-        value: openf1_config
-      - name: mongoCollection
-        inputType: FreeText
-        value: metadata
-      - name: contentStore
-        inputType: FreeText
-        value: mongo
-      - name: port
-        inputType: FreeText
-        value: "80"
+    configuration:
+      topic: pipeline-config
+      consumerGroup: config-api-v1
+      mongoHost: mongodb
+      mongoPort: "27017"
+      mongoUser: admin
+      mongoPasswordSecret: MONGO_ROOT_PASSWORD
+      mongoDatabase: openf1_config
+      mongoCollection: metadata
+      contentStore: mongo
+      port: "80"
   - name: Metadata Loader
     application: metadata-loader
     version: latest
