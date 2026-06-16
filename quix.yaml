@@ -539,7 +539,7 @@ deployments:
         value: 30
 
   - name: MongoDB
-    libraryItemId: mongodb
+    image: mongo:6.0
     version: latest
     deploymentType: Service
     resources:
