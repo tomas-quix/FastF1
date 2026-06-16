@@ -80,7 +80,7 @@ deployments:
       limits:
         cpu: 200
         memory: 500
-    desiredStatus: Stopped
+    desiredStatus: Running
     variables:
       - name: input
         inputType: InputTopic
