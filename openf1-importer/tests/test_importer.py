@@ -11,7 +11,6 @@ import unittest.mock as mock
 
 _qs_mock = mock.MagicMock()
 sys.modules.setdefault("quixstreams", _qs_mock)
-sys.modules.setdefault("quixstreams.sources", _qs_mock)
 
 import importlib
 import types

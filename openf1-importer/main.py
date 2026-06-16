@@ -7,7 +7,6 @@ load_dotenv()
 
 import requests
 from quixstreams import Application
-from quixstreams.sources import Source
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
@@ -100,94 +99,81 @@ def resolve_session_key() -> int:
     return key
 
 
-class OpenF1Source(Source):
-    """Quix Streams Source that fetches OpenF1 data and produces to multiple topics."""
+def main():
+    app = Application()
 
-    def __init__(self):
-        super().__init__(name="openf1-importer")
+    # Build topic objects keyed by endpoint
+    topics = {
+        key: app.topic(get_topic_name(key), value_serializer="json")
+        for key in TOPIC_VARS
+    }
 
-    def run(self):
-        app = Application()
+    session_key = resolve_session_key()
+    counts = {}
 
-        # Build topic objects keyed by endpoint
-        topics = {
-            key: app.topic(get_topic_name(key), value_serializer="json")
-            for key in TOPIC_VARS
-        }
+    def publish_endpoint(endpoint: str, params: dict, key_field: str = "driver_number"):
+        url = f"{BASE_URL}/{endpoint}"
+        logger.info(f"Fetching {endpoint} ...")
+        records = fetch_with_retry(url, params)
+        topic = topics[endpoint]
+        n = 0
+        with app.get_producer() as producer:
+            for record in records:
+                msg_key = str(record.get(key_field, session_key))
+                msg = topic.serialize(key=msg_key, value=record)
+                producer.produce(topic=topic, key=msg.key, value=msg.value)
+                n += 1
+        counts[endpoint] = n
+        logger.info(f"  → {n} records published to {get_topic_name(endpoint)}")
 
-        session_key = resolve_session_key()
-        counts = {}
+    base_params = {"session_key": session_key}
 
-        def publish_endpoint(endpoint: str, params: dict, key_field: str = "driver_number"):
-            url = f"{BASE_URL}/{endpoint}"
-            logger.info(f"Fetching {endpoint} ...")
-            records = fetch_with_retry(url, params)
-            topic = topics[endpoint]
-            n = 0
-            with app.get_producer() as producer:
+    # --- Non-car-data endpoints ---
+    publish_endpoint("sessions",     {"session_key": session_key}, key_field="session_key")
+    publish_endpoint("drivers",      base_params, key_field="driver_number")
+    publish_endpoint("laps",         base_params, key_field="driver_number")
+    publish_endpoint("stints",       base_params, key_field="driver_number")
+    publish_endpoint("pit",          base_params, key_field="driver_number")
+    publish_endpoint("position",     base_params, key_field="driver_number")
+    publish_endpoint("intervals",    base_params, key_field="driver_number")
+    publish_endpoint("weather",      base_params, key_field="meeting_key")
+    publish_endpoint("race_control", base_params, key_field="meeting_key")
+    publish_endpoint("team_radio",   base_params, key_field="driver_number")
+
+    # --- Car data (high-frequency — per driver to avoid oversized responses) ---
+    if INCLUDE_CAR_DATA:
+        logger.info("Fetching car_data per driver ...")
+        drivers_data = fetch_with_retry(f"{BASE_URL}/drivers", base_params)
+        driver_numbers = [str(d["driver_number"]) for d in drivers_data if "driver_number" in d]
+        logger.info(f"  Drivers found: {driver_numbers}")
+        car_topic = topics["car_data"]
+        car_count = 0
+        with app.get_producer() as producer:
+            for dn in driver_numbers:
+                logger.info(f"  Fetching car_data for driver {dn} ...")
+                records = fetch_with_retry(
+                    f"{BASE_URL}/car_data",
+                    {"session_key": session_key, "driver_number": dn},
+                )
                 for record in records:
-                    msg_key = str(record.get(key_field, session_key))
-                    producer.produce(
-                        topic=topic,
-                        key=msg_key,
-                        value=record,
-                    )
-                    n += 1
-            counts[endpoint] = n
-            logger.info(f"  -> {n} records published to {get_topic_name(endpoint)}")
+                    msg = car_topic.serialize(key=dn, value=record)
+                    producer.produce(topic=car_topic, key=msg.key, value=msg.value)
+                    car_count += 1
+                logger.info(f"    → {len(records)} records for driver {dn}")
+                time.sleep(0.2)  # polite pacing between per-driver requests
+        counts["car_data"] = car_count
+        logger.info(f"  → {car_count} total car_data records published to {get_topic_name('car_data')}")
+    else:
+        logger.info("INCLUDE_CAR_DATA=false — skipping car telemetry.")
+        counts["car_data"] = 0
 
-        base_params = {"session_key": session_key}
-
-        # --- Non-car-data endpoints ---
-        publish_endpoint("sessions",     {"session_key": session_key}, key_field="session_key")
-        publish_endpoint("drivers",      base_params, key_field="driver_number")
-        publish_endpoint("laps",         base_params, key_field="driver_number")
-        publish_endpoint("stints",       base_params, key_field="driver_number")
-        publish_endpoint("pit",          base_params, key_field="driver_number")
-        publish_endpoint("position",     base_params, key_field="driver_number")
-        publish_endpoint("intervals",    base_params, key_field="driver_number")
-        publish_endpoint("weather",      base_params, key_field="meeting_key")
-        publish_endpoint("race_control", base_params, key_field="meeting_key")
-        publish_endpoint("team_radio",   base_params, key_field="driver_number")
-
-        # --- Car data (high-frequency — per driver to avoid oversized responses) ---
-        if INCLUDE_CAR_DATA:
-            logger.info("Fetching car_data per driver ...")
-            drivers_data = fetch_with_retry(f"{BASE_URL}/drivers", base_params)
-            driver_numbers = [str(d["driver_number"]) for d in drivers_data if "driver_number" in d]
-            logger.info(f"  Drivers found: {driver_numbers}")
-            car_topic = topics["car_data"]
-            car_count = 0
-            with app.get_producer() as producer:
-                for dn in driver_numbers:
-                    logger.info(f"  Fetching car_data for driver {dn} ...")
-                    records = fetch_with_retry(
-                        f"{BASE_URL}/car_data",
-                        {"session_key": session_key, "driver_number": dn},
-                    )
-                    for record in records:
-                        producer.produce(
-                            topic=car_topic,
-                            key=dn,
-                            value=record,
-                        )
-                        car_count += 1
-                    logger.info(f"    -> {len(records)} records for driver {dn}")
-                    time.sleep(0.2)  # polite pacing between per-driver requests
-            counts["car_data"] = car_count
-            logger.info(f"  -> {car_count} total car_data records published to {get_topic_name('car_data')}")
-        else:
-            logger.info("INCLUDE_CAR_DATA=false — skipping car telemetry.")
-            counts["car_data"] = 0
-
-        # Summary
-        logger.info("=== Import complete ===")
-        total = sum(counts.values())
-        for ep, n in counts.items():
-            logger.info(f"  {ep}: {n} records")
-        logger.info(f"  TOTAL: {total} records")
+    # Summary
+    logger.info("=== Import complete ===")
+    total = sum(counts.values())
+    for ep, n in counts.items():
+        logger.info(f"  {ep}: {n} records")
+    logger.info(f"  TOTAL: {total} records")
 
 
 if __name__ == "__main__":
-    source = OpenF1Source()
-    source.run()
+    main()
