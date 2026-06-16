@@ -36,10 +36,10 @@ variables:
     description: OpenF1 team radio messages
     defaultValue: openf1-team-radio
     required: true
-  - name: output_config
-    inputType: OutputTopic
-    description: Config-UI topic consumed by Dynamic Configuration Manager
-    defaultValue: config-ui
+  - name: CONFIG_API_URL
+    inputType: FreeText
+    description: Base URL of the Dynamic Configuration Manager REST API
+    defaultValue: https://config-api-svc-quixdev-fastf1-dev.deployments-dev.quix.io
     required: true
 dockerfile: build/dockerfile
 runEntryPoint: main.py

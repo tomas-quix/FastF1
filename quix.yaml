@@ -77,9 +77,9 @@ deployments:
       - name: input_team_radio
         inputType: InputTopic
         value: openf1-team-radio
-      - name: output_config
-        inputType: OutputTopic
-        value: config-ui
+      - name: CONFIG_API_URL
+        inputType: FreeText
+        value: https://config-api-svc-quixdev-fastf1-dev.deployments-dev.quix.io
   - name: OpenF1 Importer
     application: openf1-importer
     deploymentType: Job
