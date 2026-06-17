@@ -15,54 +15,48 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 logger = logging.getLogger(__name__)
 
 
-def preload_laps(broker_conf: dict, laps_topic_name: str) -> dict:
-    """
-    Consume openf1-laps topic to EOF and build a per-driver sorted lap index.
-    Returns: {driver_number (int): [(date_start_ms, lap_number), ...]} sorted by date_start_ms
-    """
-    from confluent_kafka import Consumer
-
+def preload_laps(laps_topic_name: str) -> dict:
+    """Pre-load all laps using a QuixStreams Application consumer."""
     logger.info("Pre-loading laps from topic %s...", laps_topic_name)
 
-    conf = {
-        **broker_conf,
-        "group.id": "openf1-lap-preloader-v1",
-        "auto.offset.reset": "earliest",
-        "enable.auto.commit": "false",
-    }
+    lap_index = {}
 
-    consumer = Consumer(conf)
-    consumer.subscribe([laps_topic_name])
+    # Use a second Application to consume laps to EOF
+    lap_app = Application(
+        consumer_group="openf1-lap-preloader-v4",
+        auto_offset_reset="earliest",
+    )
+    lap_topic = lap_app.topic(laps_topic_name)
 
-    lap_index: dict = {}
-    idle_polls = 0
+    # Use the internal consumer directly to drain the topic
+    with lap_app.get_consumer() as consumer:
+        consumer.subscribe([lap_topic.name])
 
-    while idle_polls < 5:
-        msg = consumer.poll(2.0)
-        if msg is None:
-            idle_polls += 1
-            continue
-        if msg.error():
-            idle_polls += 1
-            continue
-        idle_polls = 0
-        try:
-            rec = json.loads(msg.value().decode("utf-8"))
-            dn = rec.get("driver_number")
-            ds = rec.get("date_start")
-            ln = rec.get("lap_number")
-            if dn is not None and ds and ln is not None:
-                dt = datetime.fromisoformat(ds.replace("Z", "+00:00"))
-                ts_ms = int(dt.timestamp() * 1000)
-                lap_index.setdefault(int(dn), []).append((ts_ms, int(ln)))
-        except Exception as e:
-            logger.warning("Lap parse error: %s", e)
-
-    consumer.close()
+        # Poll until we've consumed all existing messages (EOF pattern)
+        idle_count = 0
+        while idle_count < 3:
+            msg = consumer.poll(timeout=3.0)
+            if msg is None:
+                idle_count += 1
+                continue
+            if msg.error():
+                idle_count += 1
+                continue
+            idle_count = 0
+            try:
+                rec = json.loads(msg.value().decode('utf-8'))
+                dn = rec.get('driver_number')
+                ds = rec.get('date_start')
+                ln = rec.get('lap_number')
+                if dn is not None and ds and ln is not None:
+                    dt = datetime.fromisoformat(ds.replace('Z', '+00:00'))
+                    ts_ms = int(dt.timestamp() * 1000)
+                    lap_index.setdefault(dn, []).append((ts_ms, ln))
+            except Exception as e:
+                logger.warning("Lap parse error: %s", e)
 
     for dn in lap_index:
         lap_index[dn].sort()
-
     total = sum(len(v) for v in lap_index.values())
     logger.info("Loaded %d laps across %d drivers", total, len(lap_index))
     return lap_index
@@ -87,11 +81,8 @@ def main():
 
     app = Application(consumer_group=consumer_group, auto_offset_reset="earliest")
 
-    # Extract broker config for the confluent_kafka lap pre-loader consumer
-    broker_conf = app.config.broker_address.as_librdkafka_dict(plaintext_secrets=True)
-
     # Pre-load all lap data before starting main processing loop
-    lap_index = preload_laps(broker_conf, input_laps)
+    lap_index = preload_laps(input_laps)
 
     car_data_topic = app.topic(input_car_data)
     config_topic = app.topic(input_config)
