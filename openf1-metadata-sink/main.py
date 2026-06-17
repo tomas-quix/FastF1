@@ -33,18 +33,18 @@ def make_session() -> requests.Session:
 def _build_key(entity_type: str, value: dict) -> str:
     if entity_type == "meetings":
         mk = str(value.get("meeting_key", "unknown"))
-        return f"meetings/{mk}"
+        return mk
     elif entity_type == "sessions":
         mk = str(value.get("meeting_key", "unknown"))
         sk = str(value.get("session_key", "unknown"))
-        return f"sessions/{mk}-{sk}"
+        return f"{mk}-{sk}"
     elif entity_type == "drivers":
         mk = str(value.get("meeting_key", "unknown"))
         sk = str(value.get("session_key", "unknown"))
         dn = str(value.get("driver_number", "unknown"))
-        return f"drivers/{mk}-{sk}-{dn}"
+        return f"{mk}-{sk}-{dn}"
     else:
-        return f"{entity_type}/unknown"
+        return "unknown"
 
 
 def post_to_config_api(session: requests.Session, config_type: str, config_key: str, value: dict):
