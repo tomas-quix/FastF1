@@ -6,7 +6,6 @@ from datetime import datetime
 
 from dotenv import load_dotenv
 from quixstreams import Application
-from quixstreams.dataframe.joins.lookups import QuixConfigurationService
 from quixstreams.sinks.core.quix_ts_datalake_sink import QuixTSDataLakeSink
 
 load_dotenv()
@@ -15,24 +14,16 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 logger = logging.getLogger(__name__)
 
 
-def preload_laps(laps_topic_name: str) -> dict:
-    """Pre-load all laps using a QuixStreams Application consumer."""
-    logger.info("Pre-loading laps from topic %s...", laps_topic_name)
-
-    lap_index = {}
-
-    # Use a second Application to consume laps to EOF
-    lap_app = Application(
-        consumer_group="openf1-lap-preloader-v4",
+def _drain_topic(topic_name: str, consumer_group: str) -> list:
+    """Consume a topic to EOF and return all raw records as dicts."""
+    drain_app = Application(
+        consumer_group=consumer_group,
         auto_offset_reset="earliest",
     )
-    lap_topic = lap_app.topic(laps_topic_name)
-
-    # Use the internal consumer directly to drain the topic
-    with lap_app.get_consumer() as consumer:
-        consumer.subscribe([lap_topic.name])
-
-        # Poll until we've consumed all existing messages (EOF pattern)
+    topic = drain_app.topic(topic_name)
+    records = []
+    with drain_app.get_consumer() as consumer:
+        consumer.subscribe([topic.name])
         idle_count = 0
         while idle_count < 3:
             msg = consumer.poll(timeout=3.0)
@@ -44,22 +35,59 @@ def preload_laps(laps_topic_name: str) -> dict:
                 continue
             idle_count = 0
             try:
-                rec = json.loads(msg.value().decode('utf-8'))
-                dn = rec.get('driver_number')
-                ds = rec.get('date_start')
-                ln = rec.get('lap_number')
-                if dn is not None and ds and ln is not None:
-                    dt = datetime.fromisoformat(ds.replace('Z', '+00:00'))
-                    ts_ms = int(dt.timestamp() * 1000)
-                    lap_index.setdefault(dn, []).append((ts_ms, ln))
+                records.append(json.loads(msg.value().decode("utf-8")))
+            except Exception as e:
+                logger.warning("Parse error on %s: %s", topic_name, e)
+    return records
+
+
+def preload_laps(laps_topic_name: str) -> dict:
+    """Pre-load all laps; returns {driver_number: [(ts_ms, lap_number), ...]}."""
+    logger.info("Pre-loading laps from topic %s...", laps_topic_name)
+    lap_index = {}
+    for rec in _drain_topic(laps_topic_name, "openf1-lap-preloader-v4"):
+        dn = rec.get("driver_number")
+        ds = rec.get("date_start")
+        ln = rec.get("lap_number")
+        if dn is not None and ds and ln is not None:
+            try:
+                dt = datetime.fromisoformat(ds.replace("Z", "+00:00"))
+                ts_ms = int(dt.timestamp() * 1000)
+                lap_index.setdefault(dn, []).append((ts_ms, ln))
             except Exception as e:
                 logger.warning("Lap parse error: %s", e)
-
     for dn in lap_index:
         lap_index[dn].sort()
     total = sum(len(v) for v in lap_index.values())
     logger.info("Loaded %d laps across %d drivers", total, len(lap_index))
     return lap_index
+
+
+def preload_sessions(sessions_topic_name: str) -> dict:
+    """Pre-load sessions; returns {'{meeting_key}-{session_key}': session_record}."""
+    logger.info("Pre-loading sessions from topic %s...", sessions_topic_name)
+    session_index = {}
+    for rec in _drain_topic(sessions_topic_name, "openf1-session-preloader-v1"):
+        mk = rec.get("meeting_key")
+        sk = rec.get("session_key")
+        if mk is not None and sk is not None:
+            session_index[f"{mk}-{sk}"] = rec
+    logger.info("Loaded %d sessions", len(session_index))
+    return session_index
+
+
+def preload_drivers(drivers_topic_name: str) -> dict:
+    """Pre-load drivers; returns {'{meeting_key}-{session_key}-{driver_number}': driver_record}."""
+    logger.info("Pre-loading drivers from topic %s...", drivers_topic_name)
+    driver_index = {}
+    for rec in _drain_topic(drivers_topic_name, "openf1-driver-preloader-v1"):
+        mk = rec.get("meeting_key")
+        sk = rec.get("session_key")
+        dn = rec.get("driver_number")
+        if mk is not None and sk is not None and dn is not None:
+            driver_index[f"{mk}-{sk}-{dn}"] = rec
+    logger.info("Loaded %d drivers", len(driver_index))
+    return driver_index
 
 
 def find_lap(lap_index: dict, driver_number, ts_ms: int) -> str:
@@ -73,7 +101,8 @@ def find_lap(lap_index: dict, driver_number, ts_ms: int) -> str:
 
 def main():
     input_car_data = os.environ["input_car_data"]
-    input_config = os.environ["input_config"]
+    input_sessions = os.environ["input_sessions"]
+    input_drivers = os.environ["input_drivers"]
     input_laps = os.environ["input_laps"]
     table_name = os.environ.get("TABLE_NAME", "car_telemetry")
     s3_prefix = os.environ.get("S3_PREFIX", "data-lake/time-series")
@@ -81,17 +110,13 @@ def main():
 
     app = Application(consumer_group=consumer_group, auto_offset_reset="earliest")
 
-    # Pre-load all lap data before starting main processing loop
+    # Pre-load all reference data before starting main processing loop.
+    # Sessions/drivers topics are small (tens of records) so this completes in seconds.
     lap_index = preload_laps(input_laps)
+    session_index = preload_sessions(input_sessions)
+    driver_index = preload_drivers(input_drivers)
 
     car_data_topic = app.topic(input_car_data)
-    config_topic = app.topic(input_config)
-
-    lookup = QuixConfigurationService(
-        topic=config_topic,
-        app_config=app.config,
-        fallback="default",
-    )
 
     sink = QuixTSDataLakeSink(
         s3_prefix=s3_prefix,
@@ -124,36 +149,26 @@ def main():
 
     sdf = sdf.apply(add_lap)
 
-    # 3. Session enrichment: key = "{meeting_key}-{session_key}"
-    sdf = sdf.join_lookup(
-        lookup=lookup,
-        on=lambda v, k: f"{v['meeting_key']}-{v['session_key']}",
-        fields={
-            "year": lookup.json_field(
-                jsonpath="$.year", type="sessions", default=0
-            ),
-            "racetrack": lookup.json_field(
-                jsonpath="$.circuit_short_name", type="sessions", default="unknown"
-            ),
-            "session_type": lookup.json_field(
-                jsonpath="$.session_type", type="sessions", default="unknown"
-            ),
-            "session_name": lookup.json_field(
-                jsonpath="$.session_name", type="sessions", default="unknown"
-            ),
-        },
-    )
+    # 3. Session enrichment from pre-loaded index (year, circuit, session type/name)
+    def add_session_fields(value):
+        key = f"{value.get('meeting_key')}-{value.get('session_key')}"
+        session = session_index.get(key, {})
+        value["year"] = session.get("year", 0)
+        value["racetrack"] = session.get("circuit_short_name", "unknown")
+        value["session_type"] = session.get("session_type", "unknown")
+        value["session_name"] = session.get("session_name", "unknown")
+        return value
 
-    # 4. Driver enrichment: key = "{meeting_key}-{session_key}-{driver_number}"
-    sdf = sdf.join_lookup(
-        lookup=lookup,
-        on=lambda v, k: f"{v['meeting_key']}-{v['session_key']}-{v['driver_number']}",
-        fields={
-            "driver": lookup.json_field(
-                jsonpath="$.name_acronym", type="drivers", default="unknown"
-            ),
-        },
-    )
+    sdf = sdf.apply(add_session_fields)
+
+    # 4. Driver enrichment from pre-loaded index (driver acronym)
+    def add_driver_fields(value):
+        key = f"{value.get('meeting_key')}-{value.get('session_key')}-{value.get('driver_number')}"
+        driver = driver_index.get(key, {})
+        value["driver"] = driver.get("name_acronym", "unknown")
+        return value
+
+    sdf = sdf.apply(add_driver_fields)
 
     # 5. Write to QuixLake as Hive-partitioned Parquet
     sdf.sink(sink)

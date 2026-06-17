@@ -6,10 +6,15 @@ variables:
     description: High-frequency car telemetry topic
     defaultValue: openf1-car-data
     required: true
-  - name: input_config
+  - name: input_sessions
     inputType: InputTopic
-    description: Config UI topic for session and driver enrichment
-    defaultValue: config-ui
+    description: Sessions topic for session metadata enrichment (year, circuit, session type/name)
+    defaultValue: openf1-sessions
+    required: true
+  - name: input_drivers
+    inputType: InputTopic
+    description: Drivers topic for driver name enrichment
+    defaultValue: openf1-drivers
     required: true
   - name: input_laps
     inputType: InputTopic

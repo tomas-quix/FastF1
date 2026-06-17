@@ -83,9 +83,12 @@ deployments:
       - name: input_car_data
         inputType: InputTopic
         value: openf1-car-data
-      - name: input_config
+      - name: input_sessions
         inputType: InputTopic
-        value: config-ui
+        value: openf1-sessions
+      - name: input_drivers
+        inputType: InputTopic
+        value: openf1-drivers
       - name: input_laps
         inputType: InputTopic
         value: openf1-laps
