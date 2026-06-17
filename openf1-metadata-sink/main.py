@@ -50,7 +50,7 @@ def _build_key(entity_type: str, value: dict) -> str:
 def post_to_config_api(session: requests.Session, config_type: str, config_key: str, value: dict):
     url = f"{CONFIG_API_URL}/api/v1/configurations"
     payload = {
-        "metadata": {"type": config_type, "target_key": config_key},
+        "metadata": {"type": config_type, "category": config_type, "target_key": config_key},
         "content": value,
         "replace": True,
     }
