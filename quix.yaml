@@ -77,6 +77,10 @@ deployments:
         cpu: 200
         memory: 500
     desiredStatus: Running
+    variables:
+      - name: LOOKUP_FIELDS_JSON
+        inputType: FreeText
+        value: '{"driver_full_name":"drivers.full_name","driver_acronym":"drivers.name_acronym","year":"sessions.year","circuit":"sessions.circuit_short_name","session_type":"sessions.session_type","session_name":"sessions.session_name","meeting_name":"meetings.meeting_name"}'
 
 # This section describes the Topics of the data pipeline
 topics:
