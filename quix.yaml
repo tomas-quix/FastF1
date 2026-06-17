@@ -72,35 +72,16 @@ deployments:
     application: openf1-car-data-lake-sink
     version: latest
     deploymentType: Service
-    desiredStatus: Running
-    blobStorage:
-      bind: true
     resources:
       limits:
         cpu: 500
         memory: 1000
+    desiredStatus: Running
     variables:
-      - name: input_car_data
-        inputType: InputTopic
-        value: openf1-car-data
-      - name: input_sessions
-        inputType: InputTopic
-        value: openf1-sessions
-      - name: input_drivers
-        inputType: InputTopic
-        value: openf1-drivers
-      - name: input_laps
-        inputType: InputTopic
-        value: openf1-laps
-      - name: TABLE_NAME
-        inputType: FreeText
-        value: car_telemetry
-      - name: S3_PREFIX
-        inputType: FreeText
-        value: data-lake/time-series
       - name: CONSUMER_GROUP
-        inputType: FreeText
-        value: openf1-car-data-lake-sink-v1
+        value: openf1-car-data-lake-sink-v1.1
+    blobStorage:
+      bind: true
 
 # This section describes the Topics of the data pipeline
 topics:
