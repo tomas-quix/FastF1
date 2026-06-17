@@ -84,7 +84,7 @@ def main():
         logger.warning("Config API probe failed: %s", e)
 
     app = Application(
-        consumer_group="openf1-metadata-sink-v4",
+        consumer_group="openf1-metadata-sink-v5",
         auto_offset_reset="earliest",
     )
 
