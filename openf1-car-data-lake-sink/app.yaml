@@ -1,0 +1,36 @@
+name: OpenF1 Car Data Lake Sink
+language: python
+variables:
+  - name: input_car_data
+    inputType: InputTopic
+    description: High-frequency car telemetry topic
+    defaultValue: openf1-car-data
+    required: true
+  - name: input_config
+    inputType: InputTopic
+    description: Config UI topic for session and driver enrichment
+    defaultValue: config-ui
+    required: true
+  - name: input_laps
+    inputType: InputTopic
+    description: Laps topic for lap number determination (pre-loaded at startup)
+    defaultValue: openf1-laps
+    required: true
+  - name: TABLE_NAME
+    inputType: FreeText
+    description: QuixLake table name
+    defaultValue: car_telemetry
+    required: false
+  - name: S3_PREFIX
+    inputType: FreeText
+    description: Blob storage path prefix for the data lake
+    defaultValue: data-lake/time-series
+    required: false
+  - name: CONSUMER_GROUP
+    inputType: FreeText
+    description: Kafka consumer group identifier
+    defaultValue: openf1-car-data-lake-sink-v1
+    required: false
+dockerfile: build/dockerfile
+runEntryPoint: main.py
+defaultFile: main.py

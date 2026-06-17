@@ -1,0 +1,7 @@
+FROM python:3.11-slim
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONIOENCODING=UTF-8
+WORKDIR /app
+COPY --from=git /project .
+RUN pip install --no-cache-dir -r openf1-car-data-lake-sink/requirements.txt
+ENTRYPOINT ["python3", "openf1-car-data-lake-sink/main.py"]
