@@ -68,20 +68,6 @@ deployments:
     variables:
       - name: OPENF1_MEETING
         value: Monza
-  - name: OpenF1 Car Data Lake Sink
-    application: openf1-car-data-lake-sink
-    version: latest
-    deploymentType: Service
-    resources:
-      limits:
-        cpu: 500
-        memory: 1000
-    desiredStatus: Running
-    variables:
-      - name: CONSUMER_GROUP
-        value: openf1-car-data-lake-sink-v1.1
-    blobStorage:
-      bind: true
   - name: OpenF1 Car Data Enricher
     application: openf1-car-data-enricher
     version: latest
