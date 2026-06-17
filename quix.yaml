@@ -82,6 +82,31 @@ deployments:
         value: openf1-car-data-lake-sink-v1.1
     blobStorage:
       bind: true
+  - name: OpenF1 Car Data Enricher
+    application: openf1-car-data-enricher
+    deploymentType: Service
+    version: latest
+    desiredStatus: Running
+    resources:
+      cpu: 200
+      memory: 500
+      replicas: 1
+    variables:
+      - name: DATA_TOPIC
+        inputType: InputTopic
+        value: openf1-car-data
+      - name: CONFIG_TOPIC
+        inputType: InputTopic
+        value: config-ui
+      - name: OUTPUT_TOPIC
+        inputType: OutputTopic
+        value: openf1-car-data-enriched
+      - name: LOOKUP_FIELDS_JSON
+        inputType: FreeText
+        value: '{"driver_full_name":"drivers.full_name","year":"sessions.year","circuit":"sessions.circuit_short_name","session_type":"sessions.session_type","session_name":"sessions.session_name","meeting_name":"meetings.meeting_name"}'
+      - name: CONSUMER_GROUP_NAME
+        inputType: FreeText
+        value: openf1-car-data-enricher-v1
 
 # This section describes the Topics of the data pipeline
 topics:
@@ -134,3 +159,7 @@ topics:
     configuration:
       partitions: 4
       retentionInMinutes: -1
+  - name: openf1-car-data-enriched
+    configuration:
+      partitions: 4
+      retentionInMinutes: 1440

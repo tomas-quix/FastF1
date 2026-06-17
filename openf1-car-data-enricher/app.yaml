@@ -1,0 +1,31 @@
+name: OpenF1 Car Data Enricher
+language: python
+variables:
+  - name: DATA_TOPIC
+    inputType: InputTopic
+    description: Topic containing car telemetry data
+    defaultValue: openf1-car-data
+    required: true
+  - name: CONFIG_TOPIC
+    inputType: InputTopic
+    description: Topic managed by Quix Configuration Service
+    defaultValue: config-ui
+    required: true
+  - name: OUTPUT_TOPIC
+    inputType: OutputTopic
+    description: Topic to write enriched car data to
+    defaultValue: openf1-car-data-enriched
+    required: true
+  - name: LOOKUP_FIELDS_JSON
+    inputType: FreeText
+    description: JSON mapping of output field names to config field references (category.field_name)
+    defaultValue: '{"driver_full_name":"drivers.full_name","year":"sessions.year","circuit":"sessions.circuit_short_name","session_type":"sessions.session_type","session_name":"sessions.session_name","meeting_name":"meetings.meeting_name"}'
+    required: true
+  - name: CONSUMER_GROUP_NAME
+    inputType: FreeText
+    description: Kafka consumer group name
+    defaultValue: openf1-car-data-enricher-v1
+    required: true
+dockerfile: build/dockerfile
+runEntryPoint: main.py
+defaultFile: main.py
