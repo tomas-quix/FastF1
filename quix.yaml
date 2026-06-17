@@ -79,8 +79,9 @@ deployments:
     desiredStatus: Running
     variables:
       - name: LOOKUP_FIELDS_JSON
-        inputType: FreeText
         value: '{"driver_full_name":"drivers.full_name","driver_acronym":"drivers.name_acronym","year":"sessions.year","circuit":"sessions.circuit_short_name","session_type":"sessions.session_type","session_name":"sessions.session_name","meeting_name":"meetings.meeting_name"}'
+      - name: CONSUMER_GROUP_NAME
+        value: openf1-car-data-enricher-v2
 
 # This section describes the Topics of the data pipeline
 topics:
