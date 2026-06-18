@@ -157,3 +157,4 @@ topics:
       retentionInBytes: 52428800
   - name: test-data
   - name: test-laps
+  - name: test-output
