@@ -70,7 +70,9 @@ def extract_lap(row):
             ts_ms = parse_to_ms(date_str)
         except Exception:
             pass
-    return {**row, "lap_number": row.get("lap_number"), "ts_ms": ts_ms}
+    raw_lap = row.get("lap_number")
+    lap_number = int(raw_lap) if raw_lap is not None else None
+    return {**row, "lap_number": lap_number, "ts_ms": ts_ms}
 
 
 sdf_joined = sdf_joined.apply(extract_lap)
