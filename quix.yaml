@@ -96,29 +96,33 @@ deployments:
         inputType: FreeText
         value: openf1-lap-enricher-v3
   - name: OpenF1 Lap Enriched Lake Sink
-    application: openf1-lap-enriched-lake-sink
+    application: quixlake-timeseries-destination
     version: latest
     deploymentType: Service
     desiredStatus: Running
-    blobStorage:
-      bind: true
     resources:
       limits:
-        cpu: 300
+        cpu: 200
         memory: 500
     variables:
-      - name: input_topic
+      - name: input
         inputType: InputTopic
         value: openf1-car-data-lap-enriched
       - name: TABLE_NAME
         inputType: FreeText
         value: car_telemetry
-      - name: S3_PREFIX
+      - name: HIVE_COLUMNS
         inputType: FreeText
-        value: data-lake/time-series
+        value: "year,racetrack,session_type,session_name,driver,lap"
+      - name: TIMESTAMP_COLUMN
+        inputType: FreeText
+        value: ts_ms
       - name: CONSUMER_GROUP
         inputType: FreeText
         value: openf1-lap-enriched-lake-sink-v1
+      - name: AUTO_OFFSET_RESET
+        inputType: FreeText
+        value: earliest
 
 # This section describes the Topics of the data pipeline
 topics:
