@@ -1,0 +1,26 @@
+name: OpenF1 Lap Enricher
+language: python
+variables:
+  - name: DATA_TOPIC
+    inputType: InputTopic
+    description: Enriched car telemetry topic to add lap numbers to
+    defaultValue: openf1-car-data-enriched
+    required: true
+  - name: LAP_TOPIC
+    inputType: InputTopic
+    description: Lap data topic (openf1-laps)
+    defaultValue: openf1-laps
+    required: true
+  - name: OUTPUT_TOPIC
+    inputType: OutputTopic
+    description: Output topic with lap_number field added
+    defaultValue: openf1-car-data-lap-enriched
+    required: true
+  - name: CONSUMER_GROUP
+    inputType: FreeText
+    description: Kafka consumer group name
+    defaultValue: openf1-lap-enricher-v1
+    required: false
+dockerfile: build/dockerfile
+runEntryPoint: main.py
+defaultFile: main.py
