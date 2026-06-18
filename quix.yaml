@@ -107,7 +107,7 @@ deployments:
         cpu: 300
         memory: 500
     variables:
-      - name: INPUT_TOPIC
+      - name: input_topic
         inputType: InputTopic
         value: openf1-car-data-lap-enriched
       - name: TABLE_NAME

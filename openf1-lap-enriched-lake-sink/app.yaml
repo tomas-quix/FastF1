@@ -1,7 +1,7 @@
 name: OpenF1 Lap Enriched Lake Sink
 language: python
 variables:
-  - name: INPUT_TOPIC
+  - name: input_topic
     inputType: InputTopic
     description: Lap-enriched car telemetry topic
     defaultValue: openf1-car-data-lap-enriched
