@@ -113,7 +113,7 @@ deployments:
       - name: TIMESTAMP_COLUMN
         value: ts_ms
       - name: CONSUMER_GROUP
-        value: openf1-lap-enriched-lake-sink-v1
+        value: openf1-lap-enriched-lake-sink-v1.1
     blobStorage:
       bind: true
 
