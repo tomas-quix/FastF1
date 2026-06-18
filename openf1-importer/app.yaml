@@ -68,14 +68,14 @@ variables:
     required: true
   - name: OPENF1_MEETING
     inputType: FreeText
-    description: Meeting/circuit name to match (e.g. Monza, Silverstone). Leave blank for all meetings.
+    description: "Meeting/circuit name filter (e.g. Monza). Leave empty to import all meetings for the year."
     defaultValue: ""
     required: false
   - name: OPENF1_SESSION_NAME
     inputType: FreeText
-    description: Session name within the meeting (e.g. Race, Qualifying, Sprint)
-    defaultValue: Race
-    required: true
+    description: "Session name filter (e.g. Race, Qualifying). Leave empty to import all sessions."
+    defaultValue: ""
+    required: false
   - name: OPENF1_SESSION_KEY
     inputType: FreeText
     description: Direct session_key override — if set, skips year/meeting resolution

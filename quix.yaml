@@ -68,6 +68,8 @@ deployments:
     variables:
       - name: OPENF1_MEETING
         value: Monza
+      - name: OPENF1_SESSION_NAME
+        value: ""
   - name: OpenF1 Car Data Enricher
     application: openf1-car-data-enricher
     version: latest
