@@ -93,7 +93,8 @@ deployments:
     desiredStatus: Running
     variables:
       - name: CONSUMER_GROUP
-        value: openf1-lap-enricher-v2
+        inputType: FreeText
+        value: openf1-lap-enricher-v3
 
 # This section describes the Topics of the data pipeline
 topics:

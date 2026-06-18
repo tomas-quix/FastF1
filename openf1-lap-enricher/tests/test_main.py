@@ -1,28 +1,30 @@
-"""Unit tests for the extract_lap function in main.py."""
-import sys
-import os
+import sys, os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-# Ensure the app module can be imported without env vars triggering failures
-# by stubbing required env vars before import
-os.environ.setdefault("LAP_TOPIC", "test-laps")
-os.environ.setdefault("DATA_TOPIC", "test-data")
-os.environ.setdefault("OUTPUT_TOPIC", "test-output")
+from main import parse_to_ms, car_data_ts, lap_ts
 
 
-def extract_lap(row):
-    """Mirror of the extract_lap function in main.py."""
-    return {**row, "lap_number": row.get("lap_number")}
+def test_parse_to_ms_basic():
+    ms = parse_to_ms("2023-09-03T14:42:50.273000+00:00")
+    # 2023-09-03T14:42:50.273 UTC
+    assert ms == 1693752170273
 
 
-def test_extract_lap_passes_through_existing_lap_number():
-    row = {"session_key": 1, "driver_number": 44, "speed": 200, "lap_number": 5}
-    result = extract_lap(row)
-    assert result["lap_number"] == 5
-    assert result["speed"] == 200
+def test_car_data_ts_extracts_date():
+    ms = car_data_ts({"date": "2023-09-03T14:42:50.273000+00:00"}, [], 0, 0)
+    assert ms == 1693752170273
 
 
-def test_extract_lap_returns_none_when_no_lap_number():
-    row = {"session_key": 1, "driver_number": 44, "speed": 150}
-    result = extract_lap(row)
-    assert result["lap_number"] is None
-    assert result["speed"] == 150
+def test_lap_ts_extracts_date_start():
+    ms = lap_ts({"date_start": "2023-09-03T14:43:31.982000+00:00"}, [], 0, 0)
+    assert ms == 1693752211982
+
+
+def test_car_data_ts_fallback():
+    ms = car_data_ts({}, [], 99999, 0)
+    assert ms == 99999
+
+
+def test_lap_ts_fallback():
+    ms = lap_ts({}, [], 88888, 0)
+    assert ms == 88888

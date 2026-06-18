@@ -1,10 +1,39 @@
 import os
-from datetime import timedelta
+from datetime import datetime, timezone, timedelta
 
 from dotenv import load_dotenv
 load_dotenv()
 
 from quixstreams import Application
+
+
+def parse_to_ms(iso_str: str) -> int:
+    """Parse an ISO 8601 datetime string to milliseconds since epoch."""
+    s = iso_str.replace("+00:00", "").replace("Z", "")
+    if "." in s:
+        s = s.rstrip("0").rstrip(".")
+    try:
+        dt = datetime.fromisoformat(s)
+    except ValueError:
+        dt = datetime.fromisoformat(s.split(".")[0])
+    return int(dt.replace(tzinfo=timezone.utc).timestamp() * 1000)
+
+
+def car_data_ts(value, headers, timestamp, timestamp_type) -> int:
+    """Extract event timestamp from the 'date' field of enriched car data."""
+    date_str = value.get("date")
+    if date_str:
+        return parse_to_ms(date_str)
+    return int(timestamp)
+
+
+def lap_ts(value, headers, timestamp, timestamp_type) -> int:
+    """Extract event timestamp from the 'date_start' field of lap data."""
+    date_str = value.get("date_start")
+    if date_str:
+        return parse_to_ms(date_str)
+    return int(timestamp)
+
 
 LAP_TOPIC = os.environ["LAP_TOPIC"]
 DATA_TOPIC = os.environ["DATA_TOPIC"]
@@ -13,26 +42,29 @@ CONSUMER_GROUP = os.environ.get("CONSUMER_GROUP", "openf1-lap-enricher-v1")
 
 app = Application(consumer_group=CONSUMER_GROUP, auto_offset_reset="earliest")
 
-lap_topic = app.topic(LAP_TOPIC, value_deserializer="json")
-data_topic = app.topic(DATA_TOPIC, value_deserializer="json")
+data_topic = app.topic(DATA_TOPIC, value_deserializer="json",
+                       timestamp_extractor=car_data_ts)
+lap_topic = app.topic(LAP_TOPIC, value_deserializer="json",
+                      timestamp_extractor=lap_ts)
 output_topic = app.topic(OUTPUT_TOPIC, value_serializer="json")
 
 sdf_data = app.dataframe(data_topic)
 sdf_laps = app.dataframe(lap_topic)
 
-# join_asof: for each enriched car data point, attach the most recent lap record
-# whose timestamp <= the car data point's timestamp (same message key = same driver).
-# Use "left" so car data is never dropped even if no lap record has arrived yet.
+# join_asof: for each car data point, attach the most recent lap whose
+# date_start <= car data date, matched by message key (driver).
+# how="left" so car data is never dropped if no lap has arrived yet.
 sdf_joined = sdf_data.join_asof(
     right=sdf_laps,
     how="left",
-    on_merge="keep-left",           # car data fields win on any key collision
-    grace_ms=timedelta(hours=4),    # retain lap state for up to 4 hours
+    on_merge="keep-left",
+    grace_ms=timedelta(hours=4),
 )
 
-# Extract just lap_number from the joined right-side fields and keep output clean
+
 def extract_lap(row):
     return {**row, "lap_number": row.get("lap_number")}
+
 
 sdf_joined = sdf_joined.apply(extract_lap)
 sdf_joined = sdf_joined.to_topic(output_topic)
