@@ -1,0 +1,3 @@
+quixstreams[quixdatalake]>=3.0
+python-dotenv
+s3fs
