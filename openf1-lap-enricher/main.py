@@ -63,7 +63,14 @@ sdf_joined = sdf_data.join_asof(
 
 
 def extract_lap(row):
-    return {**row, "lap_number": row.get("lap_number")}
+    ts_ms = None
+    date_str = row.get("date")
+    if date_str:
+        try:
+            ts_ms = parse_to_ms(date_str)
+        except Exception:
+            pass
+    return {**row, "lap_number": row.get("lap_number"), "ts_ms": ts_ms}
 
 
 sdf_joined = sdf_joined.apply(extract_lap)
