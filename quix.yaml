@@ -93,7 +93,7 @@ deployments:
     desiredStatus: Running
     variables:
       - name: CONSUMER_GROUP
-        value: openf1-lap-enricher-v3
+        value: openf1-lap-enricher-v3.1
   - name: OpenF1 Lap Enriched Lake Sink
     application: quixlake-timeseries-destination
     version: latest
@@ -102,7 +102,7 @@ deployments:
       limits:
         cpu: 200
         memory: 500
-    desiredStatus: Running
+    desiredStatus: Stopped
     variables:
       - name: input
         value: openf1-car-data-lap-enriched
