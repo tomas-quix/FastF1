@@ -113,10 +113,10 @@ deployments:
         value: car_telemetry
       - name: HIVE_COLUMNS
         inputType: FreeText
-        value: "year,racetrack,session_type,session_name,driver,lap"
+        value: "year,circuit,session_type,session_name,driver_acronym,lap_number"
       - name: TIMESTAMP_COLUMN
         inputType: FreeText
-        value: ts_ms
+        value: date
       - name: CONSUMER_GROUP
         inputType: FreeText
         value: openf1-lap-enriched-lake-sink-v1
