@@ -103,7 +103,7 @@ deployments:
         value: openf1-car-data-lap-enriched
       - name: CONSUMER_GROUP
         inputType: FreeText
-        value: openf1-lap-enricher-v1
+        value: openf1-lap-enricher-v2
 
 # This section describes the Topics of the data pipeline
 topics:
@@ -122,7 +122,7 @@ topics:
       retentionInMinutes: -1
   - name: openf1-laps
     configuration:
-      partitions: 1
+      partitions: 4
       retentionInMinutes: -1
   - name: openf1-stints
     configuration:

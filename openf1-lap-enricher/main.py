@@ -1,13 +1,10 @@
 import os
-import json
-import time
+from datetime import timedelta
 
 from dotenv import load_dotenv
-
-load_dotenv()  # no-op in Quix Cloud; reads .env when running locally
+load_dotenv()
 
 from quixstreams import Application
-from lap_join import lap_index, process_lap, get_lap_number
 
 LAP_TOPIC = os.environ["LAP_TOPIC"]
 DATA_TOPIC = os.environ["DATA_TOPIC"]
@@ -20,43 +17,25 @@ lap_topic = app.topic(LAP_TOPIC, value_deserializer="json")
 data_topic = app.topic(DATA_TOPIC, value_deserializer="json")
 output_topic = app.topic(OUTPUT_TOPIC, value_serializer="json")
 
+sdf_data = app.dataframe(data_topic)
+sdf_laps = app.dataframe(lap_topic)
 
-with app.get_producer() as producer:
-    # Step 1: Pre-load all lap data by draining the laps topic
-    print("Pre-loading lap data...")
-    with app.get_consumer() as lap_consumer:
-        lap_consumer.subscribe([lap_topic.name])
-        last_msg_time = time.time()
-        lap_count = 0
-        while True:
-            msg = lap_consumer.poll(timeout=2.0)
-            if msg is None:
-                if time.time() - last_msg_time > 5.0:
-                    break
-                continue
-            if msg.error():
-                continue
-            last_msg_time = time.time()
-            try:
-                value = json.loads(msg.value())
-                process_lap(value)
-                lap_count += 1
-            except Exception as e:
-                print(f"Error processing lap: {e}")
-    print(f"Loaded {lap_count} lap records, {len(lap_index)} driver-session combinations")
+# join_asof: for each enriched car data point, attach the most recent lap record
+# whose timestamp <= the car data point's timestamp (same message key = same driver).
+# Use "left" so car data is never dropped even if no lap record has arrived yet.
+sdf_joined = sdf_data.join_asof(
+    right=sdf_laps,
+    how="left",
+    on_merge="keep-left",           # car data fields win on any key collision
+    grace_ms=timedelta(hours=4),    # retain lap state for up to 4 hours
+)
 
-    # Step 2: Stream enriched car data and add lap_number
-    sdf = app.dataframe(data_topic)
+# Extract just lap_number from the joined right-side fields and keep output clean
+def extract_lap(row):
+    return {**row, "lap_number": row.get("lap_number")}
 
-    def enrich_with_lap(row):
-        lap_number = get_lap_number(
-            row.get("session_key"),
-            row.get("driver_number"),
-            row.get("date"),
-        )
-        return {**row, "lap_number": lap_number}
+sdf_joined = sdf_joined.apply(extract_lap)
+sdf_joined = sdf_joined.to_topic(output_topic)
 
-    sdf = sdf.apply(enrich_with_lap)
-    sdf = sdf.to_topic(output_topic)
-
+if __name__ == "__main__":
     app.run()
