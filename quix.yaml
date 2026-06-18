@@ -100,6 +100,8 @@ deployments:
     version: latest
     deploymentType: Service
     desiredStatus: Running
+    blobStorage:
+      bind: true
     resources:
       limits:
         cpu: 200
