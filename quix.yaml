@@ -33,45 +33,6 @@ deployments:
         inputType: FreeText
         description: e.g. 1 for Bahrain GP
         value: 1
-  - name: F1 Lap Data Sink
-    application: quixlake-timeseries-destination
-    version: latest
-    deploymentType: Service
-    resources:
-      limits:
-        cpu: 200
-        memory: 500
-    desiredStatus: Running
-    variables:
-      - name: input
-        inputType: InputTopic
-        value: f1-lap-data
-      - name: TABLE_NAME
-        inputType: FreeText
-        value: f1-lap-data
-      - name: HIVE_COLUMNS
-        inputType: FreeText
-        value: year,round,race_name
-      - name: AUTO_OFFSET_RESET
-        inputType: FreeText
-        value: earliest
-      - name: BATCH_SIZE
-        inputType: FreeText
-        value: 1000
-      - name: COMMIT_INTERVAL
-        inputType: FreeText
-        value: 30
-      - name: KAFKA_VALUE_DESERIALIZER
-        inputType: FreeText
-        value: json
-      - name: AUTO_DISCOVER
-        inputType: FreeText
-        value: true
-      - name: CONSUMER_GROUP
-        inputType: FreeText
-        value: f1-lap-data-sink
-    blobStorage:
-      bind: true
   - name: F1 Telemetry Sink
     application: quixlake-timeseries-destination
     version: latest
