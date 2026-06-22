@@ -104,6 +104,74 @@ deployments:
         value: f1-lap-data-sink
     blobStorage:
       bind: true
+  - name: F1 Telemetry Sink
+    application: quixlake-timeseries-destination
+    version: latest
+    deploymentType: Service
+    resources:
+      limits:
+        cpu: 200
+        memory: 500
+    variables:
+      - name: input
+        inputType: InputTopic
+        description: Name of the Kafka input topic to consume from
+        required: true
+        value: f1-car-telemetry
+      - name: TABLE_NAME
+        inputType: FreeText
+        description: Table name for data organization
+        value: f1-car-telemetry
+      - name: HIVE_COLUMNS
+        inputType: FreeText
+        description: Comma-separated list of columns for Hive partitioning
+        value: year,round,race_name,driver_id
+      - name: TIMESTAMP_COLUMN
+        inputType: FreeText
+        description: Column containing timestamp values
+        value: timestamp
+      - name: AUTO_DISCOVER
+        inputType: FreeText
+        description: Automatically register table in REST Catalog on first write
+        value: true
+      - name: CATALOG_NAMESPACE
+        inputType: FreeText
+        description: Catalog namespace for table registration
+        value: default
+      - name: BATCH_SIZE
+        inputType: FreeText
+        description: Number of messages to batch before writing to storage
+        value: 1000
+      - name: COMMIT_INTERVAL
+        inputType: FreeText
+        description: Kafka commit interval in seconds
+        value: 30
+      - name: KAFKA_KEY_DESERIALIZER
+        inputType: FreeText
+        description: The key deserializer to use
+        value: str
+      - name: KAFKA_VALUE_DESERIALIZER
+        inputType: FreeText
+        description: The value deserializer to use
+        value: json
+      - name: CONSUMER_GROUP
+        inputType: FreeText
+        description: Kafka consumer group name
+        value: f1-telemetry-sink
+      - name: AUTO_OFFSET_RESET
+        inputType: FreeText
+        description: Where to start consuming if no offset exists
+        value: earliest
+      - name: LOGLEVEL
+        inputType: FreeText
+        description: Application logging level
+        value: INFO
+      - name: MAX_WRITE_WORKERS
+        inputType: FreeText
+        description: How many files can be written in parallel
+        value: 10
+    blobStorage:
+      bind: true
 
 # This section describes the Topics of the data pipeline
 topics:
