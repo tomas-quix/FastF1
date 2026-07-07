@@ -71,6 +71,7 @@ deployments:
       - name: OPENF1_MEETING
         value: Singapore
   - name: OpenF1 Car Data Enricher
+    group: F1
     application: openf1-car-data-enricher
     version: latest
     deploymentType: Service
