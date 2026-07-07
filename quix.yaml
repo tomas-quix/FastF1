@@ -122,6 +122,7 @@ deployments:
     blobStorage:
       bind: true
   - name: Formula E Importer
+    group: FormulaE
     application: formulae-importer
     version: latest
     deploymentType: Job
