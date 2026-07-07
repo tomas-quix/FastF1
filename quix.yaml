@@ -49,6 +49,7 @@ deployments:
         hideHeader: true
         default: true
   - name: OpenF1 Metadata Sink
+    group: F1
     application: openf1-metadata-sink
     version: latest
     deploymentType: Service
