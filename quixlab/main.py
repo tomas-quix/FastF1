@@ -1,6 +1,6 @@
 import quixlab as ql
 
-canvas = ql.Canvas(title="My Notebook", lake_tree_open=['ac_telemetry_prod', 'ac_telemetry_prod/environment=prague_office'])
+canvas = ql.Canvas(title="My Notebook", lake_tree_open=['ac_telemetry_prod', 'ac_telemetry_prod/environment=prague_office', 'car_telemetry', 'ac_telemetry_prod/environment=prague_office/test_rig=fanatec_csl_dd', 'ac_telemetry_prod/environment=prague_office/test_rig=fanatec_csl_dd/experiment=tyre_pressure', 'ac_telemetry_prod/environment=prague_office/test_rig=fanatec_csl_dd/experiment=tyre_pressure/driver=tomas neubauer', 'ac_telemetry_prod/environment=prague_office/test_rig=fanatec_csl_dd/experiment=tyre_pressure/driver=tomas neubauer/track=Spa', 'ac_telemetry_prod/environment=prague_office/test_rig=fanatec_csl_dd/experiment=tyre_pressure/driver=tomas neubauer/track=Spa/carModel=porsche_991ii_gt3_r', 'ac_telemetry_prod/environment=prague_office/test_rig=fanatec_csl_dd/experiment=tyre_pressure/driver=tomas neubauer/track=Spa/carModel=porsche_991ii_gt3_r/session_id=2026-06-17T16:04:17.019Z'])
 
 
 @canvas.dataset(position=(-20, 208), size=(770, 645), code_height=200)
@@ -54,6 +54,25 @@ def selection():
     selected_circuit = ql.ui.dropdown(circuits, label="Circuit")
 
     return selected_circuit, selected_driver
+
+
+@canvas.dataset(position=(1295, -1039), size=(907, 605), code_height=200)
+def car_telemetry_2():
+    return ql.sql("""SELECT *
+    FROM ac_telemetry_prod
+    WHERE environment = 'prague_office'
+      AND test_rig = 'fanatec_csl_dd'
+      AND experiment = 'tyre_pressure'
+      AND driver = 'tomas neubauer'
+      AND track = 'Spa'
+      AND carModel = 'porsche_991ii_gt3_r'
+      AND session_id = '2026-06-17T16:04:17.019Z'
+    ORDER BY timestamp_ms""")
+
+
+@canvas.cell(position=(2262, -1039), size=(799, 645), code_height=200, viz={'type': 'line', 'x': 'timestamp_ms', 'y': ['gas', 'rpms']})
+def cell_2(car_telemetry_2):
+    return car_telemetry_2
 
 
 if __name__ == "__main__":
