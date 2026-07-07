@@ -1,0 +1,21 @@
+name: Formula E Importer
+language: python
+variables:
+  - name: output
+    inputType: OutputTopic
+    description: Topic for flattened Formula E race classification rows
+    defaultValue: formulae-raw
+    required: true
+  - name: FE_EVENT_PAGES
+    inputType: FreeText
+    description: Comma-separated Wikipedia page titles for Formula E events to import
+    defaultValue: "2025_Berlin_ePrix"
+    required: true
+  - name: FE_SEASON
+    inputType: FreeText
+    description: Season label to tag rows with
+    defaultValue: "2024-25"
+    required: false
+dockerfile: build/dockerfile
+runEntryPoint: main.py
+defaultFile: main.py
