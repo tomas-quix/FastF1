@@ -99,7 +99,7 @@ deployments:
       limits:
         cpu: 200
         memory: 500
-    desiredStatus: Stopped
+    desiredStatus: Running
     variables:
       - name: input
         value: openf1-car-data-lap-enriched
@@ -111,6 +111,41 @@ deployments:
         value: ts_ms
       - name: CONSUMER_GROUP
         value: openf1-lap-enriched-lake-sink-v1.1
+    blobStorage:
+      bind: true
+  - name: QuixLab
+    application: quixlab
+    version: latest
+    deploymentType: Service
+    resources:
+      limits:
+        cpu: 500
+        memory: 2000
+    publicAccess:
+      enabled: true
+      urlPrefix: quixlab
+    state:
+      enabled: true
+      size: 1
+    network:
+      ports:
+        - port: 80
+          targetPort: 80
+    plugin:
+      embeddedView:
+        enabled: true
+        hideHeader: true
+        default: true
+      sidebarItem:
+        show: true
+        label: QuixLab
+        icon: grid_view
+        order: 1
+      globalItem:
+        show: true
+        label: QuixLab
+        icon: find_in_page
+        order: 1
     blobStorage:
       bind: true
 
