@@ -117,6 +117,36 @@ deployments:
         value: openf1-lap-enriched-lake-sink-v1.1
     blobStorage:
       bind: true
+  - name: Formula E Importer
+    application: formulae-importer
+    version: latest
+    deploymentType: Job
+    resources:
+      limits:
+        cpu: 500
+        memory: 500
+  - name: Formula E Lake Sink
+    application: quixlake-timeseries-destination
+    version: latest
+    deploymentType: Service
+    resources:
+      limits:
+        cpu: 200
+        memory: 500
+    desiredStatus: Running
+    variables:
+      - name: input
+        value: formulae-raw
+      - name: TABLE_NAME
+        value: formulae_lap_data
+      - name: HIVE_COLUMNS
+        value: season,event_name,session_type,driver_name
+      - name: TIMESTAMP_COLUMN
+        value: ts_ms
+      - name: CONSUMER_GROUP
+        value: formulae-lake-sink-v1
+    blobStorage:
+      bind: true
   - name: QuixLab
     application: quixlab
     version: latest
@@ -216,3 +246,7 @@ topics:
   - name: test-data
   - name: test-laps
   - name: test-output
+  - name: formulae-raw
+    configuration:
+      partitions: 1
+      retentionInMinutes: -1
