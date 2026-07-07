@@ -131,6 +131,7 @@ deployments:
         cpu: 500
         memory: 500
   - name: Formula E Lake Sink
+    group: FormulaE
     application: quixlake-timeseries-destination
     version: latest
     deploymentType: Service
