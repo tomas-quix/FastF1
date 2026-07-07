@@ -1,9 +1,9 @@
 import quixlab as ql
 
-canvas = ql.Canvas(title="My Notebook", lake_tree_open=['car_telemetry', 'car_telemetry/year=2023', 'car_telemetry/year=2023/circuit=Monza', 'car_telemetry/year=2023/circuit=Monza/session_type=Race', 'car_telemetry/year=2023/circuit=Singapore', 'car_telemetry/year=2023/circuit=Singapore/session_type=Race', 'car_telemetry/year=2023/circuit=Singapore/session_type=Race/session_name=Race'])
+canvas = ql.Canvas(title="My Notebook", lake_tree_open=['ac_telemetry_prod', 'ac_telemetry_prod/environment=prague_office'])
 
 
-@canvas.dataset(position=(-40, 235), size=(770, 645), code_height=200)
+@canvas.dataset(position=(-20, 208), size=(770, 645), code_height=200)
 def car_telemetry(selection):
     return ql.sql(f"""SELECT ts_ms, speed, lap_duration, lap_number, is_pit_out_lap
     FROM car_telemetry
