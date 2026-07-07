@@ -15,9 +15,23 @@ def car_telemetry(selection):
     ORDER BY ts_ms""")
 
 
-@canvas.cell(position=(1104, 237), size=(940, 715), code_height=200, viz={'type': 'line', 'x': 'ts_ms', 'y': ['speed']})
+@canvas.cell(position=(1104, 237), size=(977, 948), code_height=378)
 def cell_1(car_telemetry):
-    return car_telemetry
+    import plotly.express as px
+
+    df = car_telemetry.copy()
+    df["lap_time_s"] = df.groupby("lap_number")["ts_ms"].transform(lambda s: (s - s.min()) / 1000)
+    fig = px.line(
+        df.sort_values(["lap_number", "lap_time_s"]),
+        x="lap_time_s",
+        height=500,
+        y="speed",
+        color="lap_number",
+        labels={"lap_time_s": "Time since lap start (s)", "speed": "Speed (km/h)", "lap_number": "Lap"},
+        title="Speed overlay by lap",
+    )
+    fig.update_layout(legend_title_text="Lap")
+    return fig
 
 
 @canvas.cell(position=(-116, -632), size=(963, 700), code_height=333)
