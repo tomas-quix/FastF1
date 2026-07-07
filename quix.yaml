@@ -65,6 +65,10 @@ deployments:
       limits:
         cpu: 500
         memory: 1000
+    variables:
+      - name: OPENF1_MEETING
+        inputType: FreeText
+        value: "Singapore"
   - name: OpenF1 Car Data Enricher
     application: openf1-car-data-enricher
     version: latest
