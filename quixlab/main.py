@@ -15,7 +15,7 @@ def car_telemetry(selection):
     ORDER BY ts_ms""")
 
 
-@canvas.cell(position=(1104, 237), size=(1185, 971), code_height=378)
+@canvas.cell(position=(1128, 85), size=(1185, 971), code_height=378)
 def cell_1(car_telemetry):
     import plotly.express as px
 
