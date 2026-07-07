@@ -40,8 +40,15 @@ def get_topic_name(endpoint_key: str) -> str:
 
 
 def fetch_with_retry(url: str, params: dict = None, max_retries: int = 5) -> list:
-    """Fetch a URL with exponential backoff on 429/5xx."""
+    """Fetch a URL with exponential backoff on 429/5xx.
+
+    A 404 is treated as "no data available for this endpoint/session" (e.g.
+    `intervals` for a Practice session) rather than a transient error, so it
+    is not retried and does not raise — an empty list is returned instead.
+    """
     delay = 2
+    endpoint = url.rstrip("/").rsplit("/", 1)[-1]
+    session_key = (params or {}).get("session_key")
     for attempt in range(max_retries):
         try:
             resp = requests.get(url, params=params, timeout=60)
@@ -50,6 +57,11 @@ def fetch_with_retry(url: str, params: dict = None, max_retries: int = 5) -> lis
                 logger.warning(f"Rate limited. Retrying in {wait}s...")
                 time.sleep(wait)
                 continue
+            if resp.status_code == 404:
+                logger.warning(
+                    f"No {endpoint} data available for session_key={session_key} (404) — skipping"
+                )
+                return []
             resp.raise_for_status()
             return resp.json()
         except requests.RequestException as e:

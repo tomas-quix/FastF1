@@ -3,6 +3,8 @@ import sys
 import unittest
 from unittest.mock import patch, MagicMock
 
+import requests
+
 # Ensure the parent directory is on the path so we can import from main.py
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -143,7 +145,7 @@ class TestFetchWithRetry(unittest.TestCase):
         resp.status_code = status_code
         resp.json.return_value = json_data or []
         if status_code >= 400:
-            resp.raise_for_status.side_effect = Exception(f"HTTP {status_code}")
+            resp.raise_for_status.side_effect = requests.exceptions.HTTPError(f"HTTP {status_code}")
         else:
             resp.raise_for_status.return_value = None
         return resp
@@ -176,6 +178,47 @@ class TestFetchWithRetry(unittest.TestCase):
 
         self.assertEqual(result, [{"session_key": 9149}])
         mock_sleep.assert_not_called()
+
+    def test_404_returns_empty_list_without_raising(self):
+        """A 404 is treated as 'no data for this endpoint/session' — no retry,
+        no exception, just an empty list — so other sessions/endpoints in the
+        import job keep going."""
+        env = {"OPENF1_BASE_URL": "https://api.openf1.org/v1"}
+        m = _load_main(env)
+
+        r404 = self._make_response(404)
+        mock_get = MagicMock(return_value=r404)
+
+        with patch("requests.get", mock_get) as mock_get_patched, patch("time.sleep") as mock_sleep:
+            result = m.fetch_with_retry(
+                "https://api.openf1.org/v1/intervals",
+                {"session_key": 9158},
+            )
+
+        self.assertEqual(result, [])
+        # Only called once — 404 must not be retried.
+        self.assertEqual(mock_get_patched.call_count, 1)
+        mock_sleep.assert_not_called()
+
+    def test_500_retries_then_raises_after_exhausting_retries(self):
+        """A 500 (real transient error) still retries with backoff and raises
+        once retries are exhausted — unlike a 404."""
+        env = {"OPENF1_BASE_URL": "https://api.openf1.org/v1"}
+        m = _load_main(env)
+
+        r500 = self._make_response(500)
+        mock_get = MagicMock(return_value=r500)
+
+        with patch("requests.get", mock_get) as mock_get_patched, patch("time.sleep") as mock_sleep:
+            with self.assertRaises(requests.exceptions.HTTPError):
+                m.fetch_with_retry(
+                    "https://api.openf1.org/v1/weather",
+                    {"session_key": 9158},
+                    max_retries=3,
+                )
+
+        self.assertEqual(mock_get_patched.call_count, 3)
+        self.assertEqual(mock_sleep.call_count, 2)
 
 
 if __name__ == "__main__":
