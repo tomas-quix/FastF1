@@ -58,6 +58,7 @@ deployments:
         memory: 300
     desiredStatus: Running
   - name: OpenF1 Importer
+    group: F1
     application: openf1-importer
     version: latest
     deploymentType: Job
@@ -67,8 +68,7 @@ deployments:
         memory: 1000
     variables:
       - name: OPENF1_MEETING
-        inputType: FreeText
-        value: "Singapore"
+        value: Singapore
   - name: OpenF1 Car Data Enricher
     application: openf1-car-data-enricher
     version: latest
