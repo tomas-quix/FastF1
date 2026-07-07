@@ -84,6 +84,7 @@ deployments:
       - name: CONSUMER_GROUP_NAME
         value: openf1-car-data-enricher-v2
   - name: OpenF1 Lap Enricher
+    group: F1
     application: openf1-lap-enricher
     version: latest
     deploymentType: Service
