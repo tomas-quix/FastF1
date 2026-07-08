@@ -68,8 +68,8 @@ deployments:
         cpu: 500
         memory: 1000
     variables:
-      - name: OPENF1_MEETING
-        value: Singapore
+      - name: OPENF1_YEAR
+        value: 2024
   - name: OpenF1 Car Data Enricher
     group: F1
     application: openf1-car-data-enricher
