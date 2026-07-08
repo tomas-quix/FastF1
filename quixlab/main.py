@@ -15,8 +15,44 @@ def car_telemetry(selection):
     ORDER BY ts_ms""")
 
 
-@canvas.cell(position=(1128, 85), size=(1185, 971), code_height=378)
+@canvas.cell(position=(-116, -632), size=(963, 700), code_height=200)
+def selection():
+    drivers = ql.partition_values("car_telemetry", "driver_acronym")
+    circuits = ql.partition_values("car_telemetry", "circuit")
+
+    selected_driver = ql.ui.dropdown(drivers, label="Driver")
+    selected_circuit = ql.ui.dropdown(circuits, label="Circuit")
+
+    return selected_circuit, selected_driver
+
+
+@canvas.dataset(position=(1295, -1039), size=(907, 605), code_height=200)
+def car_telemetry_2():
+    return ql.sql("""SELECT *
+    FROM ac_telemetry_prod
+    WHERE environment = 'prague_office'
+      AND test_rig = 'fanatec_csl_dd'
+      AND experiment = 'tyre_pressure'
+      AND driver = 'tomas neubauer'
+      AND track = 'Spa'
+      AND carModel = 'porsche_991ii_gt3_r'
+      AND session_id = '2026-06-17T16:04:17.019Z'
+    ORDER BY timestamp_ms""")
+
+
+@canvas.cell(position=(2472, -1056), size=(799, 645), code_height=200, viz={'type': 'line', 'x': 'timestamp_ms', 'y': ['gas', 'rpms']})
+def cell_2(car_telemetry_2):
+    return car_telemetry_2
+
+
+@canvas.cell(position=(3905, -816), size=(955, 425), code_height=200, viz={'storagePath': 'quixdev-fastf1-dev', 'storageType': 'folder'})
+def quixdev_fastf1_dev():
+    ql.StorageFolder("quixdev-fastf1-dev")
+
+
+@canvas.notebook(position=(1128, 85), size=(1185, 971), code_height=200, viz={'outputCell': 0})
 def cell_1(car_telemetry):
+    # %%
     import plotly.express as px
 
     df = car_telemetry.copy()
@@ -43,36 +79,6 @@ def cell_1(car_telemetry):
     )
     fig.update_layout(legend_title_text="Lap")
     return fig
-
-
-@canvas.cell(position=(-116, -632), size=(963, 700), code_height=333)
-def selection():
-    drivers = ql.partition_values("car_telemetry", "driver_acronym")
-    circuits = ql.partition_values("car_telemetry", "circuit")
-
-    selected_driver = ql.ui.dropdown(drivers, label="Driver")
-    selected_circuit = ql.ui.dropdown(circuits, label="Circuit")
-
-    return selected_circuit, selected_driver
-
-
-@canvas.dataset(position=(1295, -1039), size=(907, 605), code_height=200)
-def car_telemetry_2():
-    return ql.sql("""SELECT *
-    FROM ac_telemetry_prod
-    WHERE environment = 'prague_office'
-      AND test_rig = 'fanatec_csl_dd'
-      AND experiment = 'tyre_pressure'
-      AND driver = 'tomas neubauer'
-      AND track = 'Spa'
-      AND carModel = 'porsche_991ii_gt3_r'
-      AND session_id = '2026-06-17T16:04:17.019Z'
-    ORDER BY timestamp_ms""")
-
-
-@canvas.cell(position=(2262, -1039), size=(799, 645), code_height=200, viz={'type': 'line', 'x': 'timestamp_ms', 'y': ['gas', 'rpms']})
-def cell_2(car_telemetry_2):
-    return car_telemetry_2
 
 
 if __name__ == "__main__":
