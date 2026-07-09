@@ -26,31 +26,7 @@ def selection():
     return selected_circuit, selected_driver
 
 
-@canvas.dataset(position=(1295, -1039), size=(907, 605), code_height=200)
-def car_telemetry_2():
-    return ql.sql("""SELECT *
-    FROM ac_telemetry_prod
-    WHERE environment = 'prague_office'
-      AND test_rig = 'fanatec_csl_dd'
-      AND experiment = 'tyre_pressure'
-      AND driver = 'tomas neubauer'
-      AND track = 'Spa'
-      AND carModel = 'porsche_991ii_gt3_r'
-      AND session_id = '2026-06-17T16:04:17.019Z'
-    ORDER BY timestamp_ms""")
-
-
-@canvas.cell(position=(2472, -1056), size=(799, 645), code_height=200, viz={'type': 'line', 'x': 'timestamp_ms', 'y': ['gas', 'rpms']})
-def cell_2(car_telemetry_2):
-    return car_telemetry_2
-
-
-@canvas.cell(position=(3905, -816), size=(955, 425), code_height=200, viz={'storagePath': 'quixdev-fastf1-dev', 'storageType': 'folder'})
-def quixdev_fastf1_dev():
-    ql.StorageFolder("quixdev-fastf1-dev")
-
-
-@canvas.notebook(position=(1128, 85), size=(1185, 971), code_height=200, viz={'outputCell': 0})
+@canvas.notebook(position=(1128, 85), size=(1228, 847), code_height=200, viz={'outputCell': 0})
 def cell_1(car_telemetry):
     # %%
     import plotly.express as px
@@ -79,6 +55,50 @@ def cell_1(car_telemetry):
     )
     fig.update_layout(legend_title_text="Lap")
     return fig
+
+
+@canvas.dataset(position=(2903, -1212), size=(1060, 605), code_height=200)
+def ac_telemetry_prod():
+    return ql.sql("""SELECT *
+    FROM ac_telemetry_prod
+    WHERE environment = 'prague_office'
+      AND test_rig = 'fanatec_csl_dd'
+      AND experiment = 'tyre_pressure'
+      AND driver = 'tomas neubauer'
+      AND track = 'Spa'
+      AND carModel = 'porsche_991ii_gt3_r'
+      AND session_id = '2026-06-17T16:04:17.019Z'
+    ORDER BY timestamp_ms""")
+
+
+@canvas.cell(position=(4297, -1258), size=(988, 688), code_height=200, viz={'type': 'line', 'x': 'timestamp_ms', 'y': ['gas', 'rpms']})
+def cell_2(ac_telemetry_prod):
+    return ac_telemetry_prod
+
+
+@canvas.cell(position=(4124, -494), size=(755, 550), code_height=200)
+def cell_3(ac_telemetry_prod):
+    import plotly.express as px
+
+    df = ac_telemetry_prod.groupby("lap")["rpms"].agg(min_rpm="min", max_rpm="max").reset_index()
+    fig = px.line(df, x="lap", y=["min_rpm", "max_rpm"], markers=True, labels={"value": "RPM", "lap": "Lap", "variable": "Metric"}, title="Min/Max RPM per Lap")
+    fig.show()
+
+
+@canvas.cell(position=(6101, -1280), size=(647, 444), code_height=200, viz={'storagePath': 'quixdev-fastf1-dev', 'storageType': 'folder'})
+def quixdev_fastf1_dev():
+    ql.StorageFolder("quixdev-fastf1-dev")
+
+
+@canvas.stream(position=(5853, -2138), size=(560, 420), code_height=200)
+def stream_4():
+    return ql.topic("formulae-raw", workspace="quixdev-fastf1-dev", offset="earliest", limit=200)
+
+
+@canvas.cell(position=(6473, -2138), size=(560, 420), code_height=200)
+def cell_5(stream_4):
+    df = stream_4.df
+    return df.tail(20)
 
 
 if __name__ == "__main__":
