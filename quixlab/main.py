@@ -71,9 +71,9 @@ def ac_telemetry_prod():
     ORDER BY timestamp_ms""")
 
 
-@canvas.cell(position=(4297, -1258), size=(988, 688), code_height=200, viz={'type': 'line', 'x': 'timestamp_ms', 'y': ['gas', 'rpms']})
+@canvas.cell(position=(4297, -1258), size=(988, 688), code_height=200, viz={'type': 'table', 'x': 'timestamp_ms', 'y': ['gas', 'rpms']})
 def cell_2(ac_telemetry_prod):
-    return ac_telemetry_prod
+    return ac_telemetry_prod[["timestamp_ms", "gas", "brake"]]
 
 
 @canvas.cell(position=(4124, -494), size=(755, 550), code_height=200)
