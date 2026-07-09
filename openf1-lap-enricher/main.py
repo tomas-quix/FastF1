@@ -2,6 +2,7 @@ import os
 from datetime import datetime, timezone, timedelta
 
 from dotenv import load_dotenv
+
 load_dotenv()
 
 from quixstreams import Application
@@ -42,10 +43,10 @@ CONSUMER_GROUP = os.environ.get("CONSUMER_GROUP", "openf1-lap-enricher-v1")
 
 app = Application(consumer_group=CONSUMER_GROUP, auto_offset_reset="earliest")
 
-data_topic = app.topic(DATA_TOPIC, value_deserializer="json",
-                       timestamp_extractor=car_data_ts)
-lap_topic = app.topic(LAP_TOPIC, value_deserializer="json",
-                      timestamp_extractor=lap_ts)
+data_topic = app.topic(
+    DATA_TOPIC, value_deserializer="json", timestamp_extractor=car_data_ts
+)
+lap_topic = app.topic(LAP_TOPIC, value_deserializer="json", timestamp_extractor=lap_ts)
 output_topic = app.topic(OUTPUT_TOPIC, value_serializer="json")
 
 sdf_data = app.dataframe(data_topic)
