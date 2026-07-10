@@ -1,1 +1,1 @@
-FROM ghcr.io/quixio/quixlab:sha-858394a
+FROM ghcr.io/quixio/quixlab:pr-31-eeb1f47
