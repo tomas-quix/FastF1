@@ -1,0 +1,21 @@
+name: Car Data Stats Aggregator
+language: python
+variables:
+  - name: input
+    inputType: InputTopic
+    description: Topic containing car telemetry data to count per minute
+    defaultValue: openf1-car-data
+    required: true
+  - name: output
+    inputType: OutputTopic
+    description: Topic to publish per-driver per-minute message counts to
+    defaultValue: stats
+    required: true
+  - name: CONSUMER_GROUP
+    inputType: FreeText
+    description: Kafka consumer group name
+    defaultValue: car-data-stats-aggregator-v1
+    required: true
+dockerfile: build/dockerfile
+runEntryPoint: main.py
+defaultFile: main.py
