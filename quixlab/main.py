@@ -44,6 +44,7 @@ def cell_1(car_telemetry):
     best = valid[valid["lap_number"].isin(best_lap_numbers)].copy()
 
     best["lap_time_s"] = best.groupby("lap_number")["ts_ms"].transform(lambda s: (s - s.min()) / 1000)
+    best
 
     # %%
     fig = px.line(
@@ -84,6 +85,43 @@ def plugin_6():
 @canvas.cell(position=(6808, -1280), size=(560, 420), code_height=200)
 def cell_3(quixdev_fastf1_dev):
     return quixdev_fastf1_dev.folders['data-lake'].folders.
+
+
+@canvas.dataset(position=(793, -1245), size=(560, 420), code_height=200)
+def ac_telemetry_prod():
+    return ql.sql("""SELECT lap, timestamp_ms, rpms, speedKmh
+    FROM ac_telemetry_prod
+    WHERE environment = 'prague_office'
+      AND test_rig = 'fanatec_csl_dd'
+      AND experiment = 'tyre_pressure'
+      AND driver = 'tomas neubauer'
+      AND track = 'Spa'
+      AND carModel = 'porsche_991ii_gt3_r'
+      AND session_id = '2026-06-17T16:04:17.019Z'
+    ORDER BY lap, timestamp_ms""")
+
+
+@canvas.cell(position=(1125, -1984), size=(560, 420), code_height=200)
+def cell_2(ac_telemetry_prod):
+    return ac_telemetry_prod
+
+
+@canvas.cell(position=(1125, -1984), size=(560, 420), code_height=200)
+def cell_4(ac_telemetry_prod):
+    import plotly.express as px
+
+    df = ac_telemetry_prod.groupby("lap")["rpms"].agg(["min", "max"]).reset_index()
+    df.columns = ["lap", "rpms_min", "rpms_max"]
+
+    fig = px.bar(
+        df,
+        x="lap",
+        y=["rpms_min", "rpms_max"],
+        barmode="group",
+        labels={"value": "RPM", "lap": "Lap", "variable": "Metric"},
+        title="Min / Max RPM per Lap",
+    )
+    return fig
 
 
 if __name__ == "__main__":
