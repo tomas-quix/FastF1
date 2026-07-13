@@ -165,7 +165,7 @@ def main():
             key = str(driver_number).encode()
             for sample in samples:
                 serialized = topic.serialize(key=key, value=sample)
-                producer.produce(topic=topic, key=serialized.key, value=serialized.value)
+                producer.produce(topic=topic.name, key=serialized.key, value=serialized.value)
             total_produced += len(samples)
             logger.info("driver %s: %d samples produced", driver_number, len(samples))
 

@@ -155,9 +155,35 @@ def test_each_car_data_sample_produces_exactly_one_message_keyed_by_driver_numbe
     key = str(driver_number).encode()
     for sample in samples:
         serialized = topic.serialize(key=key, value=sample)
-        producer.produce(topic=topic, key=serialized.key, value=serialized.value)
+        producer.produce(topic=topic.name, key=serialized.key, value=serialized.value)
 
     assert len(producer.produced) == len(samples)
     for produced_msg, original_sample in zip(producer.produced, samples):
         assert produced_msg["key"] == b"44"
         assert produced_msg["value"] == original_sample
+
+
+def test_produce_is_called_with_topic_name_string_not_topic_object():
+    """Pins the fix for TypeError: argument 1 must be str, not Topic.
+
+    The low-level producer.produce() requires topic to be a string (the
+    resolved topic name), not the Topic object returned by app.topic().
+    """
+    samples = [
+        {"driver_number": 44, "speed": 300},
+        {"driver_number": 44, "speed": 305},
+    ]
+    topic = FakeTopic()
+    producer = FakeProducer()
+    driver_number = 44
+
+    key = str(driver_number).encode()
+    for sample in samples:
+        serialized = topic.serialize(key=key, value=sample)
+        producer.produce(topic=topic.name, key=serialized.key, value=serialized.value)
+
+    assert len(producer.produced) == len(samples)
+    for produced_msg in producer.produced:
+        assert produced_msg["topic"] == topic.name
+        assert isinstance(produced_msg["topic"], str)
+        assert produced_msg["topic"] != topic
