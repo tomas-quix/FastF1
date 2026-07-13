@@ -13,6 +13,13 @@ deployments:
       cpu: 200
       memory: 500
       replicas: 1
+    variables:
+      - name: YEAR
+        value: "2024"
+      - name: TRACK
+        value: "Monza"
+      - name: SESSION_NAME
+        value: "Race"
 
 topics:
   - name: raw-openf1-car-data
