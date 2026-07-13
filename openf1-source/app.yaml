@@ -1,0 +1,28 @@
+name: OpenF1 Source
+language: python
+variables:
+  - name: output
+    inputType: OutputTopic
+    description: Topic to publish raw OpenF1 car_data samples to
+    defaultValue: raw-openf1-car-data
+    required: true
+  - name: YEAR
+    inputType: FreeText
+    description: "Season year, e.g. 2024"
+    required: true
+  - name: TRACK
+    inputType: FreeText
+    description: "Track name, matched against circuit_short_name or country_name (e.g. Monza)"
+    required: true
+  - name: SESSION_NAME
+    inputType: FreeText
+    description: "Session name, e.g. Race, Qualifying, Sprint, Practice 1"
+    required: true
+  - name: OPENF1_BASE_URL
+    inputType: FreeText
+    description: OpenF1 API base URL
+    defaultValue: https://api.openf1.org/v1
+    required: false
+dockerfile: build/dockerfile
+runEntryPoint: main.py
+defaultFile: main.py

@@ -4,4 +4,18 @@
 metadata:
   version: 2.0
 
+deployments:
+  - name: OpenF1 Source
+    application: openf1-source
+    deploymentType: Job
+    version: latest
+    resources:
+      cpu: 200
+      memory: 500
+      replicas: 1
+
+topics:
+  - name: raw-openf1-car-data
+    configuration:
+      partitions: 4
 
