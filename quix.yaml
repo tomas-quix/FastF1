@@ -153,15 +153,6 @@ deployments:
         value: formulae-lake-sink-v1
     blobStorage:
       bind: true
-  - name: Car Data Stats Aggregator
-    application: car-data-stats-aggregator
-    version: latest
-    deploymentType: Service
-    resources:
-      limits:
-        cpu: 200
-        memory: 200
-      replicas: 1
   - name: QuixLab
     application: quixlab
     version: latest
