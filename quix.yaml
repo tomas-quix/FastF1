@@ -5,6 +5,3 @@ metadata:
   version: 2.0
 
 
-# This section describes the Topics of the data pipeline
-topics:
-  - name: config-ui
