@@ -201,6 +201,14 @@ deployments:
       ports:
         - port: 80
           targetPort: 8181
+  - name: InfluxDB 3.0 Sink
+    application: influxdb-3.0-sink
+    version: latest
+    deploymentType: Service
+    resources:
+      limits:
+        cpu: 200
+        memory: 500
 
 # This section describes the Topics of the data pipeline
 topics:
@@ -274,3 +282,4 @@ topics:
       partitions: 4
       replicationFactor: 2
       retentionInMinutes: 1440
+  - name: input-data
