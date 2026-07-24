@@ -21,6 +21,16 @@ deployments:
         value: Monza
       - name: SESSION_NAME
         value: Race
+  - name: Quix Lakehouse Sink
+    application: quix-lakehouse-sink
+    version: latest
+    deploymentType: Service
+    resources:
+      limits:
+        cpu: 200
+        memory: 500
+    blobStorage:
+      bind: true
 
 # This section describes the Topics of the data pipeline
 topics:
