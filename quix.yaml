@@ -23,6 +23,18 @@ deployments:
       ports:
         - port: 27017
           targetPort: 27017
+    variables:
+      - name: MONGO_INITDB_ROOT_USERNAME
+        inputType: FreeText
+        description: The root username to initialize MongoDB with
+        required: true
+        value: admin
+      - name: MONGO_INITDB_ROOT_PASSWORD
+        inputType: ProjectVariable
+        description: The root password to initialize MongoDB with
+        required: true
+        secret: true
+        variableKey: MONGO_ROOT_PASSWORD
   - name: Dynamic Configuration Manager
     group: Configuration Managment
     application: DynamicConfiguration
