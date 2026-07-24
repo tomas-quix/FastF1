@@ -4,25 +4,34 @@
 metadata:
   version: 2.0
 
+# This section describes the Deployments of the data pipeline
 deployments:
   - name: OpenF1 Source
     application: openf1-source
-    deploymentType: Job
     version: latest
+    deploymentType: Job
     resources:
-      cpu: 200
-      memory: 500
-      replicas: 1
+      limits:
+        cpu: 200
+        memory: 500
     variables:
       - name: YEAR
-        value: "2024"
+        value: 2024
       - name: TRACK
-        value: "Monza"
+        value: Monza
       - name: SESSION_NAME
-        value: "Race"
+        value: Race
+  - name: InfluxDB 3.0 Sink
+    application: influxdb-3.0-sink
+    version: latest
+    deploymentType: Service
+    resources:
+      limits:
+        cpu: 200
+        memory: 500
 
+# This section describes the Topics of the data pipeline
 topics:
   - name: raw-openf1-car-data
     configuration:
       partitions: 4
-
