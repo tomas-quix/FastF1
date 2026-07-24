@@ -1,0 +1,73 @@
+name: influxdb-3.0-sink-2
+language: python
+variables:
+  - name: input
+    inputType: InputTopic
+    description: This is the input topic
+    defaultValue: raw-openf1-car-data
+    required: true
+  - name: influxdb3
+    inputType: VariableGroup
+    description: Shared InfluxDB v3 connection details and admin token (used by this server and by every client that reads/writes it)
+    required: true
+    variableGroupId: influxdb3-config
+    variableGroupName: InfluxDB v3 config
+    variableGroupDescription: Shared InfluxDB v3 connection details and admin token (used by this server and by every client that reads/writes it)
+    variables:
+      - key: INFLUXDB3_HOST
+        description: Base URL clients use to reach InfluxDB v3 over the internal Quix network. Include the http:// scheme and the port so the gRPC/Flight client uses plaintext on the right port (not TLS on 443).
+        defaultValue: http://influxdb3:80
+        required: true
+      - key: INFLUXDB3_USE_TOKEN
+        description: Whether to enable InfluxDB v3 authentication. Set to 'true' to require INFLUXDB3_TOKEN; leave 'false' to run without auth.
+        defaultValue: false
+        required: true
+      - key: INFLUXDB3_TOKEN
+        description: InfluxDB v3 admin token. Only used when INFLUXDB3_USE_TOKEN is 'true', in which case it must start with 'apiv3_'. Seeds server auth on first boot and authenticates clients.
+        defaultValue: CHANGE_ME
+        secret: true
+        required: true
+      - key: INFLUXDB3_DATABASE
+        description: Default database clients read from and write to
+        defaultValue: quix
+        required: true
+      - key: INFLUXDB3_ORG
+        description: Organization id. Required by some clients (e.g. Quix Streams) but not used by InfluxDB 3 Core.
+        defaultValue: quix
+  - name: INFLUXDB_MEASUREMENT_NAME
+    inputType: FreeText
+    description: The InfluxDB measurement to write data to. If not specified, the name of the input topic will be used
+    defaultValue: test_measurement
+  - name: INFLUXDB_TAG_KEYS
+    inputType: FreeText
+    description: 'The tags to include when writing the measurement data. Example: Tag1,Tag2'
+    defaultValue: ''
+  - name: INFLUXDB_FIELD_KEYS
+    inputType: FreeText
+    description: 'The fields to include when writing the measurement data. Example: Field1,Field2'
+    defaultValue: ''
+  - name: CONSUMER_GROUP_NAME
+    inputType: FreeText
+    description: The name of the consumer group to use when consuming from Kafka
+    defaultValue: influxdb-sink
+    required: true
+  - name: TIMESTAMP_COLUMN
+    inputType: FreeText
+    description: Column to read the point timestamp from, interpreted using INFLUXDB_TIME_PRECISION. If left empty (default), the Kafka message timestamp is used (millisecond precision).
+    defaultValue: ''
+  - name: INFLUXDB_TIME_PRECISION
+    inputType: FreeText
+    description: 'Precision of the TIMESTAMP_COLUMN values. One of: ns, us, ms, s. Only used when TIMESTAMP_COLUMN is set; the Kafka-timestamp default is always ms.'
+    defaultValue: ms
+  - name: BUFFER_SIZE
+    inputType: FreeText
+    description: The number of records that sink holds before flush data to the InfluxDb
+    defaultValue: 1000
+  - name: BUFFER_TIMEOUT
+    inputType: FreeText
+    description: The number of seconds that sink holds before flush data to the InfluxDb
+    defaultValue: 1
+dockerfile: dockerfile
+runEntryPoint: main.py
+defaultFile: main.py
+libraryItemId: influxdb-3-destination
