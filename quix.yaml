@@ -201,17 +201,6 @@ deployments:
       ports:
         - port: 80
           targetPort: 8181
-  - name: InfluxDB 3.0 Sink
-    application: influxdb-3.0-sink
-    version: latest
-    deploymentType: Service
-    resources:
-      limits:
-        cpu: 200
-        memory: 500
-    variables:
-      - name: input
-        value: openf1-car-data-enriched
 
 # This section describes the Topics of the data pipeline
 topics:
