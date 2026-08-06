@@ -61,21 +61,6 @@ def cell_1(car_telemetry):
     return fig
 
 
-@canvas.cell(position=(6101, -1280), size=(647, 444), code_height=200, viz={'storagePath': 'quixdev-fastf1-dev', 'storageType': 'folder'})
-def quixdev_fastf1_dev():
-    ql.StorageFolder("quixdev-fastf1-dev")
-
-
-@canvas.plugin(position=(6758, -235), size=(700, 500), code_height=0, viz={'url': 'https://backup-manager-quixdev-acquixbridge-prod.deployments-dev.quix.io', 'pluginId': '9d0fb0a0-8c43-41eb-84b0-ca38afd8b46a', 'pluginName': 'MongoDB Backup Manager'})
-def plugin_6():
-    pass
-
-
-@canvas.cell(position=(6808, -1280), size=(560, 420), code_height=200)
-def cell_3(quixdev_fastf1_dev):
-    return quixdev_fastf1_dev.folders['data-lake'].folders.
-
-
 @canvas.dataset(position=(793, -1245), size=(560, 420), code_height=200)
 def ac_telemetry_prod():
     return ql.sql("""SELECT lap, timestamp_ms, rpms, speedKmh
@@ -95,7 +80,7 @@ def cell_2(ac_telemetry_prod):
     return ac_telemetry_prod
 
 
-@canvas.cell(position=(1125, -1984), size=(560, 420), code_height=200)
+@canvas.cell(position=(1125, -1984), size=(918, 592), code_height=200)
 def cell_4(ac_telemetry_prod):
     import plotly.express as px
 
