@@ -66,17 +66,6 @@ def quixdev_fastf1_dev():
     ql.StorageFolder("quixdev-fastf1-dev")
 
 
-@canvas.stream(position=(5853, -2138), size=(560, 420), code_height=200)
-def stream_4():
-    return ql.topic("formulae-raw", workspace="quixdev-fastf1-dev", offset="earliest", limit=200)
-
-
-@canvas.cell(position=(6473, -2138), size=(560, 420), code_height=200)
-def cell_5(stream_4):
-    df = stream_4.df
-    return df.tail(20)
-
-
 @canvas.plugin(position=(6758, -235), size=(700, 500), code_height=0, viz={'url': 'https://backup-manager-quixdev-acquixbridge-prod.deployments-dev.quix.io', 'pluginId': '9d0fb0a0-8c43-41eb-84b0-ca38afd8b46a', 'pluginName': 'MongoDB Backup Manager'})
 def plugin_6():
     pass
@@ -122,6 +111,14 @@ def cell_4(ac_telemetry_prod):
         title="Min / Max RPM per Lap",
     )
     return fig
+
+
+@canvas.dataset(position=(2100, -1029), size=(560, 420), code_height=200)
+def billing_events():
+    return ql.sql("""SELECT *
+    FROM billing_events
+    WHERE environment_id = 'testrigorg-ingestionpipelineforreal-6deb6d8f'
+    """)
 
 
 if __name__ == "__main__":
