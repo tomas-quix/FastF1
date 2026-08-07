@@ -80,24 +80,6 @@ def cell_2(ac_telemetry_prod):
     return ac_telemetry_prod
 
 
-@canvas.cell(position=(1125, -1984), size=(918, 592), code_height=200)
-def cell_4(ac_telemetry_prod):
-    import plotly.express as px
-
-    df = ac_telemetry_prod.groupby("lap")["rpms"].agg(["min", "max"]).reset_index()
-    df.columns = ["lap", "rpms_min", "rpms_max"]
-
-    fig = px.bar(
-        df,
-        x="lap",
-        y=["rpms_min", "rpms_max"],
-        barmode="group",
-        labels={"value": "RPM", "lap": "Lap", "variable": "Metric"},
-        title="Min / Max RPM per Lap",
-    )
-    return fig
-
-
 @canvas.dataset(position=(2100, -1029), size=(560, 420), code_height=200)
 def billing_events():
     return ql.sql("""SELECT *
