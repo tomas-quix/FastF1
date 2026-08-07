@@ -188,6 +188,51 @@ deployments:
         order: 1
     blobStorage:
       bind: true
+  - name: cell-2-app
+    application: quixlab
+    version: latest
+    deploymentType: Service
+    resources:
+      limits:
+        cpu: 500
+        memory: 2000
+    publicAccess:
+      enabled: true
+      urlPrefix: cell-2-app
+    state:
+      enabled: true
+      size: 1
+    network:
+      ports:
+        - port: 80
+          targetPort: 80
+    variables:
+      - name: QUIXLAB_MODE
+        inputType: FreeText
+        value: app
+      - name: QUIXLAB_NODE
+        inputType: FreeText
+        value: cell_2
+      - name: QUIXLAB_CODE_NS
+        inputType: FreeText
+        value: quixlab
+    plugin:
+      embeddedView:
+        enabled: true
+        hideHeader: true
+        default: true
+      sidebarItem:
+        show: true
+        label: cell_2
+        icon: grid_view
+        order: 1
+      globalItem:
+        show: true
+        label: cell_2
+        icon: find_in_page
+        order: 1
+    blobStorage:
+      bind: true
 
 # This section describes the Topics of the data pipeline
 topics:
