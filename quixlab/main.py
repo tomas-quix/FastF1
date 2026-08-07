@@ -1,6 +1,6 @@
 import quixlab as ql
 
-canvas = ql.Canvas(title="My Notebook", lake_tree_open=['car_telemetry'])
+canvas = ql.Canvas(title="My Notebook", lake_tree_open=['car_telemetry', 'car_telemetry/year=2023', 'car_telemetry/year=2023/circuit=Singapore', 'car_telemetry/year=2023/circuit=Singapore/session_type=Race', 'car_telemetry/year=2023/circuit=Singapore/session_type=Race/session_name=Race', 'car_telemetry/year=2023/circuit=Singapore/session_type=Race/session_name=Race/driver_acronym=ALO'])
 
 
 @canvas.dataset(position=(-20, 208), size=(770, 645), code_height=200)
@@ -59,6 +59,19 @@ def cell_1(car_telemetry):
     fig.update_layout(legend_title_text="Lap")
 
     return fig
+
+
+@canvas.dataset(position=(583, -1517), size=(560, 420), code_height=200)
+def car_telemetry_2():
+    return ql.sql("""SELECT *
+    FROM car_telemetry
+    WHERE year = 2023
+      AND circuit = 'Singapore'
+      AND session_type = 'Race'
+      AND session_name = 'Race'
+      AND driver_acronym = 'ALO'
+      AND lap_number = 10
+    ORDER BY ts_ms""")
 
 
 if __name__ == "__main__":
