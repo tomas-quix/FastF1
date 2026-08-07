@@ -73,9 +73,14 @@ def car_telemetry_2():
     ORDER BY ts_ms""")
 
 
-@canvas.cell(position=(1458, -1517), size=(691, 529), code_height=200, viz={'type': 'line', 'x': 'ts_ms', 'y': ['rpm']})
+@canvas.cell(position=(1625, -1711), size=(691, 529), code_height=200, viz={'type': 'line', 'x': 'ts_ms', 'y': ['rpm']})
 def cell_2(car_telemetry_2):
     return car_telemetry_2
+
+
+@canvas.ai(position=(1591, -1080), size=(560, 420), code_height=200)
+def ai_3(car_telemetry_2):
+    """Downsample data to 1Hz and plot rpms over timestamp"""
 
 
 if __name__ == "__main__":
