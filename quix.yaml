@@ -188,19 +188,6 @@ deployments:
         order: 1
     blobStorage:
       bind: true
-  - name: InfluxDB v3 alpha
-    application: influxdb-v3-alpha
-    version: latest
-    deploymentType: Service
-    resources:
-      limits:
-        cpu: 1000
-        memory: 8000
-    network:
-      serviceName: influxdb3
-      ports:
-        - port: 80
-          targetPort: 8181
 
 # This section describes the Topics of the data pipeline
 topics:
