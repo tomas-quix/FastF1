@@ -73,7 +73,7 @@ def car_telemetry_2():
     ORDER BY ts_ms""")
 
 
-@canvas.cell(position=(1625, -1711), size=(691, 529), code_height=200, viz={'type': 'line', 'x': 'ts_ms', 'y': ['rpm']})
+@canvas.cell(position=(1625, -1711), size=(691, 529), code_height=200, viz={'appDeployment': {'id': 'afe9820f-bcac-4885-91a3-b8b510d5e606', 'kind': 'app', 'name': 'cell-2-app', 'portalUrl': 'https://portal.dev.quix.io/pipeline/deployments/afe9820f-bcac-4885-91a3-b8b510d5e606?workspace=quixdev-fastf1-dev', 'publicUrl': ''}, 'appStatus': 'QueuedForBuild', 'type': 'line', 'x': 'ts_ms', 'y': ['rpm']})
 def cell_2(car_telemetry_2):
     return car_telemetry_2
 
