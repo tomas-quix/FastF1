@@ -75,17 +75,9 @@ def ac_telemetry_prod():
     ORDER BY lap, timestamp_ms""")
 
 
-@canvas.cell(position=(1125, -1984), size=(560, 420), code_height=200)
-def cell_2(ac_telemetry_prod):
-    return ac_telemetry_prod
-
-
-@canvas.dataset(position=(2100, -1029), size=(560, 420), code_height=200)
-def billing_events():
-    return ql.sql("""SELECT *
-    FROM billing_events
-    WHERE environment_id = 'testrigorg-ingestionpipelineforreal-6deb6d8f'
-    """)
+@canvas.ai(position=(1413, -1245), size=(560, 420), code_height=200)
+def ai_1(ac_telemetry_prod):
+    """Pl"""
 
 
 if __name__ == "__main__":
