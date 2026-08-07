@@ -1,6 +1,6 @@
 import quixlab as ql
 
-canvas = ql.Canvas(title="My Notebook", lake_tree_open=['ac_telemetry_prod', 'ac_telemetry_prod/environment=prague_office', 'car_telemetry', 'ac_telemetry_prod/environment=prague_office/test_rig=fanatec_csl_dd', 'ac_telemetry_prod/environment=prague_office/test_rig=fanatec_csl_dd/experiment=tyre_pressure', 'ac_telemetry_prod/environment=prague_office/test_rig=fanatec_csl_dd/experiment=tyre_pressure/driver=tomas neubauer', 'ac_telemetry_prod/environment=prague_office/test_rig=fanatec_csl_dd/experiment=tyre_pressure/driver=tomas neubauer/track=Spa', 'ac_telemetry_prod/environment=prague_office/test_rig=fanatec_csl_dd/experiment=tyre_pressure/driver=tomas neubauer/track=Spa/carModel=porsche_991ii_gt3_r', 'ac_telemetry_prod/environment=prague_office/test_rig=fanatec_csl_dd/experiment=tyre_pressure/driver=tomas neubauer/track=Spa/carModel=porsche_991ii_gt3_r/session_id=2026-06-17T16:04:17.019Z'])
+canvas = ql.Canvas(title="My Notebook", lake_tree_open=['car_telemetry'])
 
 
 @canvas.dataset(position=(-20, 208), size=(770, 645), code_height=200)
@@ -59,33 +59,6 @@ def cell_1(car_telemetry):
     fig.update_layout(legend_title_text="Lap")
 
     return fig
-
-
-@canvas.dataset(position=(793, -1245), size=(560, 420), code_height=200)
-def ac_telemetry_prod():
-    return ql.sql("""SELECT lap, timestamp_ms, rpms, speedKmh
-    FROM ac_telemetry_prod
-    WHERE environment = 'prague_office'
-      AND test_rig = 'fanatec_csl_dd'
-      AND experiment = 'tyre_pressure'
-      AND driver = 'tomas neubauer'
-      AND track = 'Spa'
-      AND carModel = 'porsche_991ii_gt3_r'
-      AND session_id = '2026-06-17T16:04:17.019Z'
-    ORDER BY lap, timestamp_ms""")
-
-
-@canvas.ai(position=(1644, -1382), size=(1139, 691), code_height=200, viz={'type': 'line', 'x': 'timestamp', 'y': ['rpms']})
-def ai_1(ac_telemetry_prod):
-    """Plot rpms over timestamp"""
-    # ql-ai: generated from prompt 080608f5b1dca70f
-    import pandas as pd
-
-    df = ac_telemetry_prod[["timestamp_ms", "rpms"]].copy()
-    df["timestamp"] = pd.to_datetime(df["timestamp_ms"], unit="ms")
-    df = df[["timestamp", "rpms"]].sort_values("timestamp")
-
-    ql.viz(df, type="waveform", x="timestamp", y=["rpms"])
 
 
 if __name__ == "__main__":
