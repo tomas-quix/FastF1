@@ -61,7 +61,7 @@ def cell_1(car_telemetry):
     return fig
 
 
-@canvas.dataset(position=(583, -1517), size=(560, 420), code_height=200)
+@canvas.dataset(position=(583, -1517), size=(815, 590), code_height=200)
 def car_telemetry_2():
     return ql.sql("""SELECT *
     FROM car_telemetry
@@ -70,7 +70,6 @@ def car_telemetry_2():
       AND session_type = 'Race'
       AND session_name = 'Race'
       AND driver_acronym = 'ALO'
-      AND lap_number = 10
     ORDER BY ts_ms""")
 
 
