@@ -78,7 +78,7 @@ def cell_2(car_telemetry_2):
     return car_telemetry_2
 
 
-@canvas.ai(position=(1591, -1080), size=(874, 646), code_height=200)
+@canvas.ai(position=(1591, -1080), size=(874, 646), code_height=200, viz={'type': 'table', 'x': 'date', 'y': ['rpm']})
 def ai_3(car_telemetry_2):
     """Downsample data to 1Hz and plot rpms over timestamp"""
     # ql-ai: generated from prompt 43222ef3269da3d5
