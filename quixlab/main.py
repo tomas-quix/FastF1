@@ -75,9 +75,17 @@ def ac_telemetry_prod():
     ORDER BY lap, timestamp_ms""")
 
 
-@canvas.ai(position=(1413, -1245), size=(560, 420), code_height=200)
+@canvas.ai(position=(1413, -1245), size=(1139, 691), code_height=200, viz={'type': 'line', 'x': 'timestamp', 'y': ['rpms']})
 def ai_1(ac_telemetry_prod):
-    """Pl"""
+    """Plot rpms over timestamp"""
+    # ql-ai: generated from prompt 080608f5b1dca70f
+    import pandas as pd
+
+    df = ac_telemetry_prod[["timestamp_ms", "rpms"]].copy()
+    df["timestamp"] = pd.to_datetime(df["timestamp_ms"], unit="ms")
+    df = df[["timestamp", "rpms"]].sort_values("timestamp")
+
+    ql.viz(df, type="waveform", x="timestamp", y=["rpms"])
 
 
 if __name__ == "__main__":
