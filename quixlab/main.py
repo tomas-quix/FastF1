@@ -78,9 +78,19 @@ def cell_2(car_telemetry_2):
     return car_telemetry_2
 
 
-@canvas.ai(position=(1591, -1080), size=(560, 420), code_height=200)
+@canvas.ai(position=(1591, -1080), size=(874, 646), code_height=200)
 def ai_3(car_telemetry_2):
     """Downsample data to 1Hz and plot rpms over timestamp"""
+    # ql-ai: generated from prompt 43222ef3269da3d5
+    import pandas as pd
+
+    df = car_telemetry_2.copy()
+    df['date'] = pd.to_datetime(df['date'], format='ISO8601')
+
+    df = df.sort_values('date').set_index('date')
+    downsampled = df[['rpm']].resample('1s').mean().dropna().reset_index()
+
+    ql.viz(downsampled, type='line', x='date', y=['rpm'])
 
 
 if __name__ == "__main__":
