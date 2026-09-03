@@ -233,14 +233,6 @@ deployments:
         order: 1
     blobStorage:
       bind: true
-  - name: OpenF1 Car Data Enricher 2
-    application: openf1-car-data-enricher
-    version: latest
-    deploymentType: Service
-    resources:
-      limits:
-        cpu: 200
-        memory: 500
 
 # This section describes the Topics of the data pipeline
 topics:
