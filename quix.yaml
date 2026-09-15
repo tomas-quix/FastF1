@@ -315,3 +315,4 @@ topics:
       replicationFactor: 2
       retentionInMinutes: 1440
   - name: input-data
+  - name: f1-data
