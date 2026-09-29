@@ -7,7 +7,6 @@ metadata:
 # This section describes the Deployments of the data pipeline
 deployments:
   - name: MongoDB
-    group: Configuration Managment
     application: mongodb
     version: latest
     deploymentType: Service
