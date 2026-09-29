@@ -14,9 +14,6 @@ deployments:
       limits:
         cpu: 200
         memory: 500
-    state:
-      enabled: true
-      size: 10
     variables:
       - name: YEAR
         value: 2024
