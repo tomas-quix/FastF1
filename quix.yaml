@@ -21,7 +21,6 @@ deployments:
         value: Monza
       - name: SESSION_NAME
         value: Race
-    disabled: true
   - name: Quix Lakehouse Sink
     application: quix-lakehouse-sink
     version: latest
