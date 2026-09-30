@@ -7,7 +7,6 @@ metadata:
 # This section describes the Deployments of the data pipeline
 deployments:
   - name: MongoDB
-    group: Configuration Managment
     application: mongodb
     version: latest
     deploymentType: Service
@@ -176,12 +175,12 @@ deployments:
         enabled: true
         hideHeader: true
         default: true
-      sidebarItem:
+      environmentItem:
         show: true
         label: QuixLab
         icon: grid_view
         order: 1
-      globalItem:
+      organisationItem:
         show: true
         label: QuixLab
         icon: find_in_page
@@ -221,12 +220,12 @@ deployments:
         enabled: true
         hideHeader: true
         default: true
-      sidebarItem:
+      environmentItem:
         show: true
         label: cell_2
         icon: grid_view
         order: 1
-      globalItem:
+      organisationItem:
         show: true
         label: cell_2
         icon: find_in_page
