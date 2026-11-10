@@ -239,6 +239,14 @@ deployments:
       limits:
         cpu: 200
         memory: 200
+  - name: Demo Data Source 2
+    application: demo-data-source-2
+    version: latest
+    deploymentType: Job
+    resources:
+      limits:
+        cpu: 200
+        memory: 200
 
 # This section describes the Topics of the data pipeline
 topics:
@@ -314,4 +322,3 @@ topics:
       retentionInMinutes: 1440
   - name: input-data
   - name: f1-data
- 
